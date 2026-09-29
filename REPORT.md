@@ -108,6 +108,22 @@ in Dawson for the winter.
     confirmed that no map is unwinnable, that training helps, and that never trading
     rarely wins (about 16% on Normal, versus about 70% for a strong player who trades).
 
+## Development timeline
+
+The git repository was created partway through development, after the game had
+already gone through several full versions. Everything before that point is still in
+the repo:
+
+| When (IST) | Version | Where to find it |
+|---|---|---|
+| Sep 29, day | Idea research and theme exploration; first playable node-map prototype (a branching trail, a rent deadline turned into a gold-rush boat deadline) | `archive/graph-version/` |
+| Sep 29, evening | Node map with transport choices (walk, horse, dog sled, canoe), trail fights, weapons, tutorial, map codes, credited icons and sounds | `archive/graph-version/` |
+| Sep 29, late night | Rebuilt as an open 2D world with top-down fights, places, training and a trade ability; then fixed enemy counts and optional training | the first commit, "Open-world version before v5 plan" |
+| Sep 30, 00:15 onward | Git repository started. Version 5 and all later changes are commits: unique places with tiers, the bounty clock, fair enemy attacks, lost-gold recovery, required trading, difficulty levels, the last-hour warning, the report and packaging | commit history |
+
+So the first commit is not the start of the project. It is a snapshot of the game as it
+stood when version control was added.
+
 ## 4. Cut, simplified or unfinished ideas
 
 - **The branching node-map version.** It had transport choices (walk, horse, dog sled,
