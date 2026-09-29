@@ -25,6 +25,10 @@ gold, or gold for time, to make the boat before the river freezes for good.
 7. **Board the boat** at Dawson Dock with 270 gold before time runs out.
 
 ### Intended player experience
+Freeze-Up is designed to be **played in one go**: a single run lasts about 6–8 minutes
+and nothing is saved between sessions. When the river freezes or you board the boat, the
+run ends, and the end screen offers the same map again or a new one.
+
 Constant, readable pressure. Every action visibly costs time or gold, the clock never
 stops (except when paused), and the player must keep weighing "Is this fight worth the
 hours?", "Should I buy time now while it's cheap?" and "Can I still make the dock?".
@@ -47,6 +51,13 @@ The theme is built into every system, not just the goal:
 - **Everything takes time.** Walking, shopping, training and fighting all run the clock.
   Carrying gold makes you walk slower, so your wealth costs you time.
 - **Losses cost both.** Losing a fight costs gold plus the time of a rematch.
+
+**Why the tradeoff is the theme.** Time and gold act as two currencies that constantly
+turn into each other. Fights, work and long walks turn hours into gold; buying time turns
+gold back into hours. Because the exchange rate is always unfair and gets worse as the
+river freezes, every choice becomes a question of whether an hour is worth more as gold
+or gold is worth more as time. Winning means managing both currencies at once, which is
+exactly what "time is money" means.
 
 The historical hook is Benjamin Franklin's "Remember that time is money" (1748), set in
 the Klondike Gold Rush, where the yearly river freeze-up really did strand prospectors

@@ -26,6 +26,18 @@ Roam the frozen wilds, fight wolves, bandits and bears for bounties, and trade y
 - **The bounty clock.** Win a fight fast and you get the full bounty. Take too long and it drops.
 - **The clock never stops.** Walking, shopping, training and fighting all cost time, and heavy gold slows you down.
 
+### How the time–gold tradeoff is the theme
+"Time is money" isn't just the title here; it is the main rule of the game. Time and gold are two currencies that constantly turn into each other, and every decision is an exchange rate between them:
+- **Spending time to make money:** every fight, every hour worked (Q) and every walk to a far-off bounty turns hours into gold.
+- **Spending money to buy time:** buying hours (E) turns gold back into time. You start with too little time to earn the ticket by fighting alone, so every winning run has to buy time at some point.
+- **The rate is never fair:** trading back always loses, and time gets more expensive as the river freezes (2 gold an hour at the start, 5 near the end). The river freezes for good at hour 60, so even money can't buy unlimited time.
+- **Fast work pays more:** the bounty clock cuts your pay the longer a fight takes, and carrying gold slows your walk, so your wealth costs you time.
+
+The result is one question the whole way through: is this hour worth more to me as gold, or is this gold worth more to me as time?
+
+### Play it in one go
+Freeze-Up is meant to be played in one sitting. A full run takes about 6–8 minutes, and progress isn't saved: when the river freezes or you board the boat, the run is over. Pause with P if you need a break (the screen hides while paused). Losing is part of it. Try again with the same map code, plan a better route, and trade smarter.
+
 ### Features
 - An open world with five unique places, each with three tiers of harder, better-paid fights and a boss at the end.
 - Enemies that warn before they attack: bandits shout "!", wolves crouch before they lunge, bears slam the ground and rage at half health.
@@ -46,7 +58,7 @@ Roam the frozen wilds, fight wolves, bandits and bears for bounties, and trade y
 | Buy time (gold → time) | hold E |
 | Pause / mute | P / M |
 
-A run takes about 6–8 minutes. Play with keyboard and mouse.
+Play in one sitting (about 6–8 minutes a run) with keyboard and mouse.
 
 ### Credits
 - **Icons:** game-icons.net (CC BY 3.0) by Lorc, Delapouite, Skoll and Cathelineau. https://game-icons.net
