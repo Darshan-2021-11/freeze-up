@@ -11,8 +11,10 @@ own hands. The clock never stops.
 
 Open `index.html` in a browser. No install and no server needed.
 
-For itch.io: zip everything except `archive/` and `tools/` (with `index.html` at
-the top level) and upload it as an HTML game.
+For itch.io, build the zip from the repo folder and upload it as an HTML game
+(page text and settings are in `ITCH_PAGE.md`):
+
+    zip -qr dist/freeze-up.zip index.html style.css src assets/fonts assets/sounds CREDITS.md
 
 ## How it works
 

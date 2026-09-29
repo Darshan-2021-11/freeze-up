@@ -360,7 +360,7 @@
     }
     if (help) {
       label(ctx, "WASD move · Mouse aim · Click to shoot (quick clicks spread) · Space dash · R reload · 1–3 weapons", FU.Arena.W / 2, FU.Arena.H - 20, 14, INK);
-      label(ctx, "No running away. " + a.def.tip + " Enemies show \"!\" before they attack.", FU.Arena.W / 2, FU.Arena.H - 44, 13, INK);
+      label(ctx, a.def.tip, FU.Arena.W / 2, FU.Arena.H - 44, 13, INK);
     }
     // The crosshair widens with bloom: quick clicking spreads your shots.
     this.drawCrosshair(mouse, a.weapon === "dynamite" ? 20 : 12 + a.bloom * 160);

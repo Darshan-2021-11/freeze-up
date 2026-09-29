@@ -96,7 +96,7 @@
       name: "Bear Cave",
       icon: "mountain-cave",
       stars: 2,
-      tip: "Bears glow before they charge (make them crash into a rock), slam the ground when you're close (leave the red circle), and rage at half health.",
+      tip: "Bears glow before charging (lure them into rocks), slam when close (leave the red circle) and rage at half health.",
       tiers: [
         { waves: [{ bear: 1 }], reward: 18, par: 10 },
         { waves: [{ bear: 1, wolf: 3 }], reward: 26, par: 13 },
