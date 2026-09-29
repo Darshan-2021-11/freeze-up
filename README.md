@@ -41,8 +41,10 @@ the top level) and upload it as an HTML game.
   Hit 8 of 12 targets to gain a skill level (max 5): more crit chance (double
   damage), faster shots and faster reloads. Each level costs more and the drill
   gets faster.
-- **Fights.** Top-down shooter: WASD move, mouse aim, click to shoot, Space to dash,
-  R to reload, 1–3 to change weapon. Skill: aiming, dodging, using rocks.
+- **Fights.** Top-down shooter: WASD move, mouse aim, click to shoot (one shot per
+  click), Space to dash, R to reload, 1–3 to change weapon. Quick clicking widens
+  your spread (the crosshair grows), and accuracy under 50% trims up to 10% off the
+  bounty, so aimed shots beat spamming. Skill: aiming, dodging, using rocks.
   Luck: enemy mix, spawns, rocks, bullet spread, rewards.
 - **Trade ability (required).** You start with 26 hours, which is not enough to win by
   fighting alone. Hold E to buy time with gold, hold Q to work for gold. Prices rise
@@ -51,6 +53,13 @@ the top level) and upload it as an HTML game.
   The river freezes for good at hour 60, so bought time is limited too.
 - **Towns.** Your Cabin (start), the Trading Post (shop), the Shooting Range and
   Dawson Dock (shop at 1.5x prices; buy the ticket here to win).
+
+## Difficulty
+
+Chosen on the title screen. Easy: enemies 15% weaker and 10% slower, 1 extra hour.
+Hard: enemies 10% tougher and 5% faster, bandits shoot 10% more often.
+Bot results for whole runs (strong / weak aim): Easy 100% / 89%, Normal 71% / 11%,
+Hard 30% / 0%.
 
 ## Map codes
 

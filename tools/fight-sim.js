@@ -7,7 +7,15 @@ const runs = Number(process.argv[2]) || 200;
 const LAG = Number(process.argv[3]) || 6; // frames of reaction delay (30 per second)
 const SHAKE = Number(process.argv[4]) || 60; // aim wobble in pixels
 const DODGE = process.argv[5] !== "nododge";
+const DIFF = process.argv[6] || "normal";
+const CLICK_GAP = 0.25;
 let lag = [];
+// A person clicks about 4 times a second, not every frame.
+function click(a) {
+  if (a.lastClick !== undefined && a.time - a.lastClick < CLICK_GAP) return false;
+  a.lastClick = a.time;
+  return true;
+}
 
 function bot(a) {
   const p = a.player;
@@ -29,7 +37,7 @@ function bot(a) {
   if (lag[key].length > LAG) lag[key].shift();
   const old = lag[key][0];
   const err = () => (Math.random() - 0.5) * SHAKE;
-  return { dx, dy, aimX: old.x + err(), aimY: old.y + err(), fire: true, dash: DODGE && d < 90, reload: false };
+  return { dx, dy, aimX: old.x + err(), aimY: old.y + err(), fire: click(a), dash: DODGE && d < 90, reload: false };
 }
 
 // [place, tier, losses there, skill level]
@@ -41,7 +49,7 @@ for (const [kind, tier, losses, skill] of cases) {
   let secs = 0;
   let pay = 0;
   for (let i = 0; i < runs; i++) {
-    const s = FU.newGame("sim-" + i);
+    const s = FU.newGame("sim-" + i, DIFF);
     s.ammo.dynamite = 0;
     s.skill = skill;
     const place = { kind, tier, losses };

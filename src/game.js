@@ -20,17 +20,19 @@
     return h;
   };
 
-  FU.newGame = function (code) {
+  FU.newGame = function (code, difficulty) {
+    const diff = FU.DIFFICULTIES[difficulty] ? difficulty : "normal";
     const C = FU.CONFIG;
     const rng = FU.makeRng(FU.seedFromCode(code));
     const world = FU.generateWorld(rng);
     const cabin = world.towns[0];
     const s = {
       code: String(code).trim().toLowerCase(),
+      difficulty: diff,
       rng,
       world,
       player: { x: cabin.x + 60, y: cabin.y, facing: 1 },
-      hours: C.START_HOURS,
+      hours: C.START_HOURS + FU.DIFFICULTIES[diff].hours,
       clock: 0, // game hours passed (for places filling up again)
       gold: C.START_GOLD,
       maxHearts: C.START_HEARTS,

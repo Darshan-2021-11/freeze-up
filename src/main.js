@@ -23,6 +23,7 @@
   let helpLeft = 0;
   let mouse = null;
   let mouseDown = false;
+  let clicked = false; // a click since the last frame: one shot per click
   let working = false;
   let buying = false;
   let coinTimer = 0;
@@ -43,8 +44,8 @@
     }
   }
 
-  function startGame(code) {
-    s = FU.newGame(String(code || "").trim() || FU.randomCode());
+  function startGame(code, difficulty) {
+    s = FU.newGame(String(code || "").trim() || FU.randomCode(), difficulty || s.difficulty);
     arena = null;
     drill = null;
     FU.UI.logCount = -1;
@@ -234,7 +235,7 @@
     if (keys.has("s") || keys.has("arrowdown")) dy += 1;
     const aim = mouse ? renderer.toField(mouse.x, mouse.y) : { x: arena.player.x + 100, y: arena.player.y };
     for (const [k, id] of [["1", "revolver"], ["2", "shotgun"], ["3", "dynamite"]]) if (pressed.has(k)) FU.Arena.switchWeapon(arena, s, id);
-    FU.Arena.update(arena, s, dt, { dx, dy, aimX: aim.x, aimY: aim.y, fire: mouseDown, dash: pressed.has(" "), reload: pressed.has("r") });
+    FU.Arena.update(arena, s, dt, { dx, dy, aimX: aim.x, aimY: aim.y, fire: clicked, dash: pressed.has(" "), reload: pressed.has("r") });
     helpLeft = Math.max(0, helpLeft - dt);
     for (const e of arena.events) play(e, e === "hit" ? 0.45 : e === "step" ? 0.4 : 0.6);
     arena.events = [];
@@ -257,7 +258,8 @@
           ? a.def.name + " is conquered! Patrols here pay " + next.reward + " gold each."
           : "Tier " + FU.TIER_NAMES[place.tier] + " is now open here: bounty " + next.reward + " gold.";
       const back = got.stash ? ", plus the <b>" + got.stash + " gold</b> you left here" : "";
-      message("You won in " + Math.round(a.time) + "s!", "You took <b>" + got.reward + " gold</b>" + back + ". " + after, "Continue", "gold-nuggets", null);
+      const acc = "Accuracy " + Math.round(FU.Arena.accuracy(a) * 100) + "%" + (FU.Arena.accuracyFactor(a) < 1 ? " (wild shooting trimmed the bounty)" : "") + ". ";
+      message("You won in " + Math.round(a.time) + "s!", "You took <b>" + got.reward + " gold</b>" + back + ". " + acc + after, "Continue", "gold-nuggets", null);
     } else {
       const drop = FU.loseFight(s, place);
       play("error", 0.6);
@@ -372,6 +374,7 @@
   canvas.addEventListener("pointerdown", (e) => {
     mouse = localPoint(e);
     mouseDown = true;
+    clicked = true;
     if (mode === "drill" && drill) {
       const f = renderer.toField(mouse.x, mouse.y);
       FU.Drill.click(drill, f.x, f.y);
@@ -459,6 +462,7 @@
       buying = false;
     }
     pressed.clear();
+    clicked = false;
 
     FU.UI.updateHud(s, working, buying);
     if (mode === "fight" && arena) {

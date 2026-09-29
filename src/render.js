@@ -342,11 +342,17 @@
     label(ctx, w.name + ": " + ammo, FU.Arena.W - 110, 22, 15, INK);
     const dashReady = p.dashCd <= 0;
     label(ctx, dashReady ? "Dash ready (Space)" : "Dash " + p.dashCd.toFixed(1) + "s", FU.Arena.W - 110, 46, 13, dashReady ? "#2f6b3a" : "#7a6f5c");
+    if (a.shotsFired) {
+      const acc = Math.round(FU.Arena.accuracy(a) * 100);
+      const cut = FU.Arena.accuracyFactor(a) < 1;
+      label(ctx, "Accuracy " + acc + "%" + (cut ? " (bounty cut)" : ""), FU.Arena.W - 110, 68, 13, cut ? "#9b2c2c" : "#2f6b3a");
+    }
     if (help) {
-      label(ctx, "WASD move · Mouse aim · Click/hold to shoot · Space dash · R reload · 1–3 weapons", FU.Arena.W / 2, FU.Arena.H - 20, 14, INK);
+      label(ctx, "WASD move · Mouse aim · Click to shoot (quick clicks spread) · Space dash · R reload · 1–3 weapons", FU.Arena.W / 2, FU.Arena.H - 20, 14, INK);
       label(ctx, "No running away. " + a.def.tip + " Enemies show \"!\" before they attack.", FU.Arena.W / 2, FU.Arena.H - 44, 13, INK);
     }
-    this.drawCrosshair(mouse, a.weapon === "dynamite" ? 20 : 12);
+    // The crosshair widens with bloom: quick clicking spreads your shots.
+    this.drawCrosshair(mouse, a.weapon === "dynamite" ? 20 : 12 + a.bloom * 160);
     ctx.restore();
   };
 

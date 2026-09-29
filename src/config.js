@@ -3,7 +3,7 @@
   const FU = (g.FU = g.FU || {});
 
   FU.CONFIG = {
-    START_HOURS: 26,
+    START_HOURS: 28,
     // The river freezes for good at this hour. Buying time (E) can't go past it.
     FREEZE_HOUR: 60,
     START_GOLD: 10,
@@ -49,6 +49,13 @@
 
     // Low-time warnings: the clock stops and a popup offers to buy time.
     LOW_TIME_WARNINGS: [8, 3], // hours left
+
+    // Aim. One shot per click; quick clicking widens the spread (bloom),
+    // which settles when you pause. Wild shooting trims the bounty a little.
+    BLOOM_STEP: 0.07, // extra spread (radians) per shot
+    BLOOM_MAX: 0.35,
+    BLOOM_DECAY: 0.6, // radians per second
+    ACCURACY: { target: 0.5, maxCut: 0.1, minShots: 4 }, // below 50% hits: up to 10% off
 
     START_HEARTS: 5,
     MAX_HEARTS: 9,
@@ -129,6 +136,13 @@
     tiers: [{ waves: [{ wolf: 2 }, { bandit: 1 }], reward: 0, par: 99 }],
   };
   FU.PLACE_ORDER = ["den", "camp", "cave", "lake", "fort"];
+
+  // Difficulty: enemy health, enemy speed, time between bandit shots, extra start hours.
+  FU.DIFFICULTIES = {
+    easy: { name: "Easy", hp: 0.85, speed: 0.9, fire: 1.2, hours: 1 },
+    normal: { name: "Normal", hp: 1, speed: 1, fire: 1, hours: 0 },
+    hard: { name: "Hard", hp: 1.1, speed: 1.05, fire: 0.9, hours: 0 },
+  };
   FU.TIER_NAMES = ["I", "II", "III"];
   // After tier III, a place offers endless patrols: tier I enemies for a small bounty.
   FU.PATROL_REWARD = 5;

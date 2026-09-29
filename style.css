@@ -489,6 +489,22 @@ label.code small {
   color: var(--ink-soft);
 }
 
+div.code {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 18px;
+}
+
+div.code small {
+  color: var(--ink-soft);
+}
+
+#diff-row button.on {
+  background: var(--ink);
+  color: var(--paper);
+}
+
 label.code input {
   font: inherit;
   padding: 6px 10px;

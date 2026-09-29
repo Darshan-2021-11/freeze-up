@@ -71,11 +71,16 @@
         place,
         def,
         tierDef,
-        speedMult: tierDef.speed || 1,
+        speedMult: (tierDef.speed || 1) * FU.DIFFICULTIES[s.difficulty || "normal"].speed,
+        shotGapMult: FU.DIFFICULTIES[s.difficulty || "normal"].fire, // bandit shot spacing
+        bloom: 0,
+        trigger: 0, // a click waits this long for the gun to be ready
+        shotsFired: 0,
+        shotsHit: 0,
         ice: !!def.ice,
         waves,
         wave: 0,
-        hpMult: Math.max(0.5, 1 - C.MERCY * place.losses),
+        hpMult: Math.max(0.5, 1 - C.MERCY * place.losses) * FU.DIFFICULTIES[s.difficulty || "normal"].hp,
         enemies: [],
         shots: [],
         foeShots: [],
@@ -106,7 +111,19 @@
       const t = a.tierDef;
       const floor = FU.bountyFloor(t.reward);
       const k = Math.min(1, Math.max(0, a.time - t.par) / (2 * t.par));
-      return Math.round(t.reward - (t.reward - floor) * k);
+      return Math.round((t.reward - (t.reward - floor) * k) * FU.Arena.accuracyFactor(a));
+    },
+
+    // Share of trigger pulls that hit something (dynamite not counted).
+    accuracy(a) {
+      return a.shotsFired ? a.shotsHit / a.shotsFired : 1;
+    },
+
+    // Small bounty cut for wild shooting: 1 = no cut.
+    accuracyFactor(a) {
+      const A = FU.CONFIG.ACCURACY;
+      if (a.shotsFired < A.minShots) return 1;
+      return 1 - A.maxCut * Math.max(0, A.target - FU.Arena.accuracy(a)) / A.target;
     },
 
     canUse(a, s, id) {
@@ -196,6 +213,7 @@
 
       // Weapons
       a.cooldown = Math.max(0, a.cooldown - dt);
+      a.bloom = Math.max(0, a.bloom - C.BLOOM_DECAY * dt);
       if (a.reloadLeft > 0) {
         a.reloadLeft -= dt;
         if (a.reloadLeft <= 0) {
@@ -205,7 +223,10 @@
         }
       }
       if (input.reload) FU.Arena.reload(a, s);
-      if (input.fire) fire(a, s, input);
+      // One shot per click. A click made just before the gun is ready still counts.
+      if (input.fire) a.trigger = 0.15;
+      a.trigger = Math.max(0, a.trigger - dt);
+      if (a.trigger > 0 && fire(a, s, input)) a.trigger = 0;
 
       // Player shots
       for (const b of a.shots) {
@@ -217,6 +238,10 @@
         for (const e of a.enemies) {
           if (Math.hypot(e.x - b.x, e.y - b.y) < FU.ENEMIES[e.kind].radius + 4) {
             hurtEnemy(a, e, b.dmg, b.vx, b.vy);
+            if (b.pull && !b.pull.hit) {
+              b.pull.hit = true;
+              a.shotsHit += 1;
+            }
             if (b.crit) a.fx.push({ type: "text", x: e.x, y: e.y - 30, t: 0.6, text: "Crit!" });
             b.life = 0;
             break;
@@ -302,7 +327,7 @@
         hp,
         maxHp: hp,
         phase: rng.next() * 6.28,
-        shootT: def.shootEvery ? roll(rng, def.shootEvery) : 0,
+        shootT: def.shootEvery ? roll(rng, def.shootEvery) * a.shotGapMult : 0,
         chargeT: def.chargeEvery ? roll(rng, def.chargeEvery) : 0,
         state: "move",
         stateT: 0,
@@ -317,8 +342,9 @@
     });
   }
 
+  // Returns true if a shot or throw happened.
   function fire(a, s, input) {
-    if (a.cooldown > 0 || a.reloadLeft > 0) return;
+    if (a.cooldown > 0 || a.reloadLeft > 0) return false;
     const id = a.weapon;
     const w = FU.WEAPONS[id];
     const p = a.player;
@@ -332,24 +358,29 @@
       a.cooldown = w.cooldown;
       a.events.push("reload");
       if (s.ammo.dynamite <= 0) a.weapon = "revolver";
-      return;
+      return true;
     }
 
     if (a.mag[id] <= 0) {
-      if (w.ammo && s.ammo[w.ammo] <= 0) return FU.Arena.switchWeapon(a, s, "revolver");
-      return FU.Arena.reload(a, s);
+      if (w.ammo && s.ammo[w.ammo] <= 0) FU.Arena.switchWeapon(a, s, "revolver");
+      else FU.Arena.reload(a, s);
+      return false;
     }
     a.mag[id] -= 1;
     if (w.ammo) s.ammo[w.ammo] -= 1;
     a.cooldown = w.cooldown * a.fireMult;
     a.events.push(id);
+    const pull = { hit: false };
+    a.shotsFired += 1;
     for (let i = 0; i < w.pellets; i++) {
-      const ang = p.aim + (rng.next() - 0.5) * 2 * w.spread;
+      const ang = p.aim + (rng.next() - 0.5) * 2 * (w.spread + a.bloom);
       const crit = rng.chance(a.crit);
-      a.shots.push({ x: p.x + Math.cos(p.aim) * 24, y: p.y + Math.sin(p.aim) * 24, vx: Math.cos(ang) * w.speed, vy: Math.sin(ang) * w.speed, life: w.range / w.speed, dmg: w.dmg * (crit ? 2 : 1), crit });
+      a.shots.push({ x: p.x + Math.cos(p.aim) * 24, y: p.y + Math.sin(p.aim) * 24, vx: Math.cos(ang) * w.speed, vy: Math.sin(ang) * w.speed, life: w.range / w.speed, dmg: w.dmg * (crit ? 2 : 1), crit, pull });
     }
+    a.bloom = Math.min(FU.CONFIG.BLOOM_MAX, a.bloom + FU.CONFIG.BLOOM_STEP * (w.pellets > 1 ? 1.5 : 1));
     a.fx.push({ type: "flash", x: p.x + Math.cos(p.aim) * 30, y: p.y + Math.sin(p.aim) * 30, t: 0.08 });
     if (a.mag[id] <= 0 && (!w.ammo || s.ammo[w.ammo] > 0)) FU.Arena.reload(a, s);
+    return true;
   }
 
   function updateEnemy(a, e, dt, rng) {
@@ -424,7 +455,7 @@
           }
           a.events.push("revolver");
           e.state = "move";
-          e.shootT = roll(rng, def.shootEvery) / a.speedMult;
+          e.shootT = (roll(rng, def.shootEvery) * a.shotGapMult) / a.speedMult;
         }
       } else {
         e.shootT -= dt;

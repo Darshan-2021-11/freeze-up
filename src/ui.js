@@ -33,7 +33,7 @@
     {
       icons: ["revolver", "sawed-off-shotgun", "dynamite", "sprint"],
       title: "How to fight",
-      text: "WASD to move, mouse to aim, click or hold to shoot. Space to dash through danger. Bandits shout \"!\" before they shoot. Bears glow red before they charge: dodge, and let them crash into a rock.",
+      text: "WASD to move, mouse to aim, click to shoot: one shot per click, and quick clicking spreads your shots. Space to dash through danger. Bandits shout \"!\" before they shoot. Bears glow red before they charge: dodge, and let them crash into a rock.",
     },
     {
       icons: ["trade", "hourglass"],
@@ -50,7 +50,20 @@
   FU.UI = {
     init(h) {
       this.h = h;
-      $("btn-start").onclick = () => h.start($("code-input").value);
+      $("btn-start").onclick = () => h.start($("code-input").value, this.difficulty);
+      const notes = {
+        easy: "Easy: weaker, slower enemies and 1 extra hour.",
+        normal: "Normal: the intended challenge.",
+        hard: "Hard: tougher, faster enemies; bandits shoot more often.",
+      };
+      this.difficulty = "normal";
+      document.querySelectorAll("#diff-row button").forEach((b) => {
+        b.onclick = () => {
+          this.difficulty = b.dataset.diff;
+          document.querySelectorAll("#diff-row button").forEach((o) => o.classList.toggle("on", o === b));
+          $("diff-note").textContent = notes[this.difficulty];
+        };
+      });
       $("btn-random").onclick = () => ($("code-input").value = FU.randomCode());
       $("btn-howto").onclick = () => this.openTutorial(() => this.showTitle());
       $("btn-resume").onclick = h.resume;
@@ -63,7 +76,7 @@
       $("tut-next").onclick = () => this.tutStep(1);
       $("tut-skip").onclick = () => this.closeTutorial();
       $("code-input").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") h.start($("code-input").value);
+        if (e.key === "Enter") h.start($("code-input").value, this.difficulty);
       });
       // The trade buttons work while held, like the Q and E keys.
       for (const [id, key] of [["btn-work", "q"], ["btn-buy", "e"]]) {
@@ -209,7 +222,7 @@
         b.onclick = () => this.h.weapon(id);
         box.appendChild(b);
       });
-      $("here-hint").textContent = "WASD move · mouse aim · click shoot · Space dash · R reload";
+      $("here-hint").textContent = "WASD move · mouse aim · click to shoot (pace your clicks) · Space dash · R reload";
     },
 
     // ---- Popups ----
@@ -360,6 +373,7 @@
         ["Hours bought (E)", FU.fmtHours(st.bought)],
       ];
       if (won) stats.push(["Score", String(s.score)]);
+      stats.push(["Difficulty", FU.DIFFICULTIES[s.difficulty].name]);
       stats.push(["Map code", s.code]);
       $("end-stats").innerHTML = stats.map(([k, v]) => "<dt>" + k + "</dt><dd>" + v + "</dd>").join("");
       $("end-screen").hidden = false;

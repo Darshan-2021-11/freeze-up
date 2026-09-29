@@ -1,7 +1,7 @@
 // Full-run check: a bot walks to the nearest ready place, fights (with the
 // same human-like fight bot), trains after losses, and heads to the dock
 // once it has enough gold. Walking uses straight lines x1.3 for detours.
-// Usage: node tools/run-sim.js [runs] ['{"CONFIG_KEY": value}'] [trainTo] [aimLag] [aimShake] [notrade]
+// Usage: node tools/run-sim.js [runs] ['{"CONFIG_KEY": value}'] [trainTo] [aimLag] [aimShake] [trade|notrade] [easy|normal|hard]
 ["config", "rng", "world", "arena", "game"].forEach((f) => require("../src/" + f + ".js"));
 const FU = globalThis.FU;
 const C = FU.CONFIG;
@@ -11,6 +11,12 @@ const AIM_LAG = Number(process.argv[5]) || 8; // frames of reaction delay: highe
 const AIM_SHAKE = Number(process.argv[6]) || 75; // aim wobble in pixels
 
 let lag = [];
+// A person clicks about 4 times a second, not every frame.
+function click(a) {
+  if (a.lastClick !== undefined && a.time - a.lastClick < CLICK_GAP) return false;
+  a.lastClick = a.time;
+  return true;
+}
 function fightBot(a) {
   const p = a.player;
   if (!a.enemies.length) return { dx: 0, dy: 0, aimX: p.x + 1, aimY: p.y, fire: false };
@@ -23,7 +29,7 @@ function fightBot(a) {
   const o = lag[k][0];
   const err = () => (Math.random() - 0.5) * AIM_SHAKE;
   const away = d < 220;
-  return { dx: away ? p.x - e.x : 0, dy: away ? p.y - e.y : Math.sin(a.time * 1.3), aimX: o.x + err(), aimY: o.y + err(), fire: true, dash: d < 90 };
+  return { dx: away ? p.x - e.x : 0, dy: away ? p.y - e.y : Math.sin(a.time * 1.3), aimX: o.x + err(), aimY: o.y + err(), fire: click(a), dash: d < 90 };
 }
 
 function walk(s, x, y) {
@@ -56,6 +62,8 @@ function train(s) {
 }
 const TRAIN_TO = Number(process.argv[4]) || 0; // skill level the bot trains up to
 const TRADE = process.argv[7] !== "notrade"; // "notrade": never uses Q or E
+const DIFF = process.argv[8] || "normal";
+const CLICK_GAP = 0.25;
 
 function hoursTo(a, b) {
   const from = a.player || a;
@@ -75,7 +83,7 @@ let losses = 0;
 let realSecs = 0;
 let deadEnds = 0; // everything conquered and out of time, still short of the ticket
 for (let i = 0; i < runs; i++) {
-  const s = FU.newGame("run-" + i);
+  const s = FU.newGame("run-" + i, DIFF);
   const dock = s.world.towns[2];
   while (s.status === "playing") {
     const toDock = (Math.hypot(dock.x - s.player.x, dock.y - s.player.y) * 1.3) / FU.walkSpeed(s) * C.CLOCK_RATE;
