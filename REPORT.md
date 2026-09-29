@@ -132,11 +132,11 @@ in Dawson for the winter.
 
 ## 5. Team contributions
 
-Solo entry: **Darshan** (the only team member): game designer, system designer,
+Solo entry: **Darshan** (the only team member): game designer, architect,
 playtester and producer.
 
-**System architecture: how the game works as a whole**
-Designed the structure of the game's systems and how they connect:
+**Architecture: how the game works**
+Designed the architecture of the game and how all its parts work together:
 - **The core economy:** time and gold as two currencies that convert into each other,
   with asymmetric trade rates, and the rule that winning is impossible without
   converting one into the other.
