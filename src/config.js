@@ -111,6 +111,14 @@
       ],
     },
   };
+  // Free practice at Your Cabin: no bounty, no gold lost. Only time passes.
+  FU.PLACES.practice = {
+    name: "Practice",
+    icon: "wood-cabin",
+    stars: 0,
+    tip: "Practice: no gold to win or lose, but the clock runs.",
+    tiers: [{ waves: [{ wolf: 2 }, { bandit: 1 }], reward: 0, par: 99 }],
+  };
   FU.PLACE_ORDER = ["den", "camp", "cave", "lake", "fort"];
   FU.TIER_NAMES = ["I", "II", "III"];
 

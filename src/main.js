@@ -111,6 +111,10 @@
       place = near.item;
       mode = "place";
       FU.UI.showPlace(s, place);
+    } else if (near.item.kind === "cabin") {
+      place = { kind: "practice", tier: 0, losses: 0 };
+      mode = "place";
+      FU.UI.showPractice(s);
     } else if (near.item.kind === "range") {
       mode = "range";
       FU.UI.showRange(s);
@@ -168,7 +172,7 @@
         ? "Space: fight at " + def.name + " tier " + FU.TIER_NAMES[near.item.tier] + " (bounty " + tier.reward + " gold)"
         : def.name + " is conquered. Nothing left here.";
     } else if (near) {
-      const extra = { dock: " (ticket " + C.TARGET_GOLD + " gold)", range: " (train your aim)" }[near.item.kind] || " (shop)";
+      const extra = { dock: " (shop and ticket " + C.TARGET_GOLD + " gold)", range: " (train your aim)", cabin: " (free practice)" }[near.item.kind] || " (shop)";
       prompt = "Space: enter " + FU.TOWNS[near.item.kind].name + extra;
     }
     FU.UI.setPrompt(prompt);
@@ -181,7 +185,7 @@
     FU.UI.hidePopup();
     FU.UI.setPrompt(null);
     arena = FU.Arena.create(s, place);
-    s.stats.fights += 1;
+    if (place.kind !== "practice") s.stats.fights += 1;
     helpLeft = storage("freezeup2-fought") ? 4 : 12;
     storage("freezeup2-fought", "1");
     FU.UI.panelKey = "";
@@ -207,7 +211,10 @@
     const a = arena;
     arena = null;
     FU.UI.panelKey = "";
-    if (a.won) {
+    if (place.kind === "practice") {
+      play(a.won ? "good" : "error", 0.6);
+      message(a.won ? "Practice won" : "Practice lost", (a.won ? "Nice shooting." : "No harm done.") + " It took " + Math.round(a.time) + " seconds. No gold won or lost.", "Continue", "wood-cabin", null);
+    } else if (a.won) {
       const reward = FU.winFight(s, place, FU.Arena.bounty(a));
       play("coins", 0.7);
       const next = FU.nextTier(place);

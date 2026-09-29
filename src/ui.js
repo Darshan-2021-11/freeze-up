@@ -42,8 +42,8 @@
     },
     {
       icons: ["shop", "hearts"],
-      title: "Shops",
-      text: "Your Cabin, the Trading Post and Dawson Dock sell shotgun shells, dynamite, a shotgun and extra hearts. Walk up to a place or shop and press Space.",
+      title: "Towns",
+      text: "Your Cabin has free practice fights. The Trading Post sells shells, dynamite, a shotgun and extra hearts. Dawson Dock sells the same for more, plus the ticket home. Walk up to a building and press Space.",
     },
   ];
 
@@ -237,6 +237,15 @@
       if (place.losses) html += "<p>You lost here " + place.losses + " time" + (place.losses > 1 ? "s" : "") + ". The enemies are weaker now.</p>";
       html += "<p><b>Once you start, there's no running away. Lose, and you drop a quarter of your gold.</b></p></div></div>";
       html += "<div class='row'><button class='primary' id='pl-go'>Fight (Space)</button><button id='pl-no'>Not now (Esc)</button></div>";
+      this.popup(html);
+      $("pl-go").onclick = () => this.h.startFight();
+      $("pl-no").onclick = () => this.h.closePopup();
+    },
+
+    showPractice(s) {
+      let html = "<div class='foe'>" + ico("wood-cabin") + "<div><h3>Your Cabin</h3>";
+      html += "<p>Practice fight: 2 wolves, then a bandit. No gold to win or lose, but the clock keeps running.</p></div></div>";
+      html += "<div class='row'><button class='primary' id='pl-go'>Practice (Space)</button><button id='pl-no'>Leave (Esc)</button></div>";
       this.popup(html);
       $("pl-go").onclick = () => this.h.startFight();
       $("pl-no").onclick = () => this.h.closePopup();

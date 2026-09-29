@@ -331,7 +331,7 @@
     label(ctx, a.def.name + " " + FU.TIER_NAMES[a.place.tier] + " · wave " + Math.min(a.wave, a.waves.length) + " of " + a.waves.length + " · " + a.enemies.length + " left", FU.Arena.W / 2, 22, 15, INK);
     const bounty = FU.Arena.bounty(a);
     const full = bounty >= a.tierDef.reward;
-    label(ctx, "Bounty: " + bounty + " gold" + (full ? " (" + Math.max(0, Math.ceil(a.tierDef.par - a.time)) + "s at full)" : " and dropping"), FU.Arena.W / 2, 48, 15, full ? "#2f6b3a" : "#9b2c2c", true);
+    if (a.tierDef.reward) label(ctx, "Bounty: " + bounty + " gold" + (full ? " (" + Math.max(0, Math.ceil(a.tierDef.par - a.time)) + "s at full)" : " and dropping"), FU.Arena.W / 2, 48, 15, full ? "#2f6b3a" : "#9b2c2c", true);
     const w = FU.WEAPONS[a.weapon];
     let ammo = FU.Arena.ammoText(a, s, a.weapon);
     if (a.reloadLeft > 0) ammo = "reloading...";
