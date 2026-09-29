@@ -51,7 +51,12 @@
   };
 
   FU.frozen = function (s) {
-    return Math.min(1, s.clock / (FU.CONFIG.START_HOURS + 20));
+    return Math.min(1, s.clock / FU.CONFIG.FREEZE_HOUR);
+  };
+
+  // Hours that can still be bought before the final freeze.
+  FU.buyableHours = function (s) {
+    return Math.max(0, FU.CONFIG.FREEZE_HOUR - s.clock - s.hours);
   };
 
   // Time passing. Returns false once time has run out.
@@ -71,6 +76,16 @@
 
   // ---- The trade ability ----
 
+  // Today's rates. Both rise as the freeze gets closer; buying always costs more.
+  FU.workRate = function (s) {
+    const r = FU.CONFIG.WORK_RATE;
+    return r[0] + (r[1] - r[0]) * FU.frozen(s);
+  };
+  FU.buyRate = function (s) {
+    const r = FU.CONFIG.BUY_RATE;
+    return r[0] + (r[1] - r[0]) * FU.frozen(s);
+  };
+
   // Q held: turn time into gold. Stops before the last hour.
   FU.work = function (s, dt) {
     const C = FU.CONFIG;
@@ -78,7 +93,7 @@
     if (step <= 0) return false;
     FU.spend(s, step);
     s.stats.worked += step;
-    s.workAcc += step * C.WORK_RATE;
+    s.workAcc += step * FU.workRate(s);
     let got = false;
     while (s.workAcc >= 1) {
       s.workAcc -= 1;
@@ -92,13 +107,14 @@
   FU.buyTime = function (s, dt) {
     const C = FU.CONFIG;
     if (s.gold <= 0) return false;
-    s.buyAcc += C.CONVERT_SPEED * C.BUY_RATE * dt;
+    const rate = FU.buyRate(s);
+    s.buyAcc += C.CONVERT_SPEED * rate * dt;
     let spent = false;
-    while (s.buyAcc >= 1 && s.gold > 0) {
+    while (s.buyAcc >= 1 && s.gold > 0 && FU.buyableHours(s) >= 1 / rate) {
       s.buyAcc -= 1;
       s.gold -= 1;
-      s.hours += 1 / C.BUY_RATE;
-      s.stats.bought += 1 / C.BUY_RATE;
+      s.hours += 1 / rate;
+      s.stats.bought += 1 / rate;
       spent = true;
     }
     return spent;

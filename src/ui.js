@@ -38,7 +38,7 @@
     {
       icons: ["trade", "hourglass"],
       title: "Trade time and gold",
-      text: "Hold Q to work: 1 hour becomes 1 gold. Hold E to buy time: 4 gold becomes 1 hour. Trading back always loses, so plan ahead.",
+      text: "You start with too little time to win by fighting alone: you will need to trade. Hold E to buy time with gold, or Q to work for gold. Prices rise as the river freezes (time: 2 to 5 gold an hour; work: 1 to 2 gold an hour), and the river freezes for good at hour 60. Buy early while it's cheap, but not before you can afford it.",
     },
     {
       icons: ["shop", "hearts"],
@@ -71,8 +71,6 @@
         b.addEventListener("pointerdown", () => h.hold(key, true));
         for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => h.hold(key, false));
       }
-      $("work-rate").textContent = FU.CONFIG.WORK_RATE;
-      $("buy-rate").textContent = FU.CONFIG.BUY_RATE;
       this.logCount = -1;
       this.panelKey = "";
     },
@@ -149,6 +147,10 @@
         $("hud-gear").innerHTML = gear;
         this.gearHtml = gear;
       }
+      const room = FU.buyableHours(s);
+      $("hud-buyable").textContent = room >= 1 ? "final freeze in " + FU.fmtHours(room + s.hours) + " (E can add " + FU.fmtHours(room) + ")" : "final freeze: no more time for sale";
+      $("work-rate").textContent = FU.workRate(s).toFixed(1);
+      $("buy-rate").textContent = FU.buyRate(s).toFixed(1);
       $("btn-work").classList.toggle("on", working);
       $("btn-buy").classList.toggle("on", buying);
       $("code-tag").textContent = "Map code: " + s.code;

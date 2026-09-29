@@ -3,7 +3,7 @@
 A game for the Glitch MILAN Game Jam '26 (theme: **Time is Money**).
 
 Gold rush, Canada, 1898. The last boat home leaves Dawson before the river freezes,
-and the ticket costs 300 gold. Walk anywhere in an open world, fight wolves,
+and the ticket costs 270 gold. Walk anywhere in an open world, fight wolves,
 bandits and bears for gold, and trade time for gold (or gold for time) with your
 own hands. The clock never stops.
 
@@ -40,8 +40,11 @@ the top level) and upload it as an HTML game.
 - **Fights.** Top-down shooter: WASD move, mouse aim, click to shoot, Space to dash,
   R to reload, 1–3 to change weapon. Skill: aiming, dodging, using rocks.
   Luck: enemy mix, spawns, rocks, bullet spread, rewards.
-- **Trade ability.** Hold Q: 1 hour becomes 1 gold. Hold E: 4 gold becomes 1 hour.
-  Trading back always loses.
+- **Trade ability (required).** You start with 26 hours, which is not enough to win by
+  fighting alone. Hold E to buy time with gold, hold Q to work for gold. Prices rise
+  as the river freezes: time costs 2 gold an hour at the start and 5 at the end;
+  work pays 1 gold an hour at the start and 2 at the end. Trading back always loses.
+  The river freezes for good at hour 60, so bought time is limited too.
 - **Towns.** Your Cabin (start), the Trading Post (shop), the Shooting Range and
   Dawson Dock (shop at 1.5x prices; buy the ticket here to win).
 
@@ -54,9 +57,10 @@ screen, or open `index.html?code=wolf-4821`. The same code always gives the same
 
 - `node tools/fight-sim.js 200` — a human-like bot (slow reactions, shaky aim)
   fights every tier of every place 200 times. Shows win rate, fight length and bounty.
-- `node tools/run-sim.js 150 '{}' 2` — a bot plays whole games, training up to skill
-  level 2 (last number; 0 = never trains). Shows win rate, time left and real
-  minutes per run. The JSON overrides config values, for example '{"START_HOURS":50}'.
+- `node tools/run-sim.js 150 '{}' 2 8 75` — a bot plays whole games. Arguments:
+  config overrides (JSON), skill level it trains up to (0 = never), aim lag and aim
+  shake (higher = weaker player), and `notrade` to forbid Q and E. Shows win rate,
+  time left, hours traded and real minutes per run.
 
 All balance numbers are in `src/config.js`.
 

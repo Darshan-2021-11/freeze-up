@@ -3,9 +3,11 @@
   const FU = (g.FU = g.FU || {});
 
   FU.CONFIG = {
-    START_HOURS: 50,
+    START_HOURS: 26,
+    // The river freezes for good at this hour. Buying time (E) can't go past it.
+    FREEZE_HOUR: 60,
     START_GOLD: 10,
-    TARGET_GOLD: 300,
+    TARGET_GOLD: 270,
 
     // The clock always runs: in the world, in shops, in fights and in training.
     CLOCK_RATE: 0.1, // game hours per real second (10 real seconds = 1 hour)
@@ -40,8 +42,9 @@
     DRILL: { targets: 12, need: 8, life: 1.4, lifeStep: 0.12, gap: 0.6, radius: 34 },
 
     // The player's trade ability. Going back and forth always loses.
-    WORK_RATE: 1, // Q: 1 hour of work -> 1 gold
-    BUY_RATE: 4, // E: 4 gold -> 1 hour
+    // Rates move as the river freezes (0 = start, 1 = frozen): time gets dearer.
+    WORK_RATE: [1, 2], // Q: gold earned per hour of work, start -> end
+    BUY_RATE: [2, 5], // E: gold paid per hour bought, start -> end
     CONVERT_SPEED: 4, // hours converted per real second while the key is held
 
     START_HEARTS: 5,

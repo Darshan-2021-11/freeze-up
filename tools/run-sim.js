@@ -1,7 +1,7 @@
 // Full-run check: a bot walks to the nearest ready place, fights (with the
 // same human-like fight bot), trains after losses, and heads to the dock
 // once it has enough gold. Walking uses straight lines x1.3 for detours.
-// Usage: node tools/run-sim.js [runs] ['{"CONFIG_KEY": value}']
+// Usage: node tools/run-sim.js [runs] ['{"CONFIG_KEY": value}'] [trainTo] [aimLag] [aimShake] [notrade]
 ["config", "rng", "world", "arena", "game"].forEach((f) => require("../src/" + f + ".js"));
 const FU = globalThis.FU;
 const C = FU.CONFIG;
@@ -55,6 +55,18 @@ function train(s) {
   FU.finishTraining(s, Math.random() < 0.7);
 }
 const TRAIN_TO = Number(process.argv[4]) || 0; // skill level the bot trains up to
+const TRADE = process.argv[7] !== "notrade"; // "notrade": never uses Q or E
+
+function hoursTo(a, b) {
+  const from = a.player || a;
+  const speed = a.player ? FU.walkSpeed(a) : FU.CONFIG.WALK_SPEED * 0.7;
+  return ((Math.hypot(b.x - from.x, b.y - from.y) * 1.3) / speed) * C.CLOCK_RATE;
+}
+let tradedRuns = 0;
+let boughtH = 0;
+let workedH = 0;
+let lostGold = 0;
+let lostRuns = 0;
 
 let won = 0;
 let left = 0;
@@ -75,26 +87,43 @@ for (let i = 0; i < runs; i++) {
       train(s);
       continue;
     }
-    // Nearest ready place, worth the trip.
-    const ready = s.world.places; // conquered places still offer patrols
-    if (s.hours < toDock + 4) {
-      if (ready.every((p) => FU.placeDone(p))) deadEnds++;
-      // Out of options: work the spare time, then go to the dock.
-      FU.work(s, Math.max(0, s.hours - toDock - 1) / C.CONVERT_SPEED);
-      if (walk(s, dock.x, dock.y)) FU.board(s);
-      if (s.status === "playing") s.status = "lost";
-      break;
-    }
+    // Best place to fight next: reward per distance. Conquered places still offer patrols.
+    const ready = s.world.places;
     const p = ready.reduce((m, x) => {
       const score = (x) => FU.nextTier(x).reward / (1 + Math.hypot(x.x - s.player.x, x.y - s.player.y) / 600);
       return score(x) > score(m) ? x : m;
     });
+    // Hours to walk there, fight (about 2.5h) and still reach the dock.
+    const need = hoursTo(s, p) + 2.5 + hoursTo(p, dock) + 1;
+    if (TRADE && s.hours < need) {
+      // Buy the missing hours if the fight is worth more than they cost.
+      const hrs = need - s.hours + 0.5; // a little extra: purchases come in whole gold
+      const tiersLeft = ready.some((x) => !FU.placeDone(x));
+      if ((tiersLeft || hrs * FU.buyRate(s) < FU.nextTier(p).reward) && s.gold > hrs * FU.buyRate(s)) {
+        FU.buyTime(s, hrs / C.CONVERT_SPEED);
+      }
+    }
+    if (s.hours < need) {
+      if (ready.every((x) => FU.placeDone(x))) deadEnds++;
+      // Out of options: work the spare time (if trading), then go to the dock.
+      if (TRADE) FU.work(s, Math.max(0, s.hours - toDock - 1) / C.CONVERT_SPEED);
+      if (walk(s, dock.x, dock.y)) FU.board(s);
+      if (s.status === "playing") s.status = "lost";
+      break;
+    }
     if (!walk(s, p.x, p.y)) break;
     const before = s.stats.losses;
     fight(s, p);
     losses += s.stats.losses - before;
   }
   clears += s.stats.wins;
+  if (s.status === "won" && (s.stats.worked > 0 || s.stats.bought > 0)) tradedRuns++;
+  boughtH += s.stats.bought;
+  workedH += s.stats.worked;
+  if (s.status !== "won") {
+    lostRuns++;
+    lostGold += s.gold;
+  }
   realSecs += s.clock / C.CLOCK_RATE;
   if (s.status === "won") {
     won++;
@@ -102,5 +131,6 @@ for (let i = 0; i < runs; i++) {
   }
 }
 console.log("win rate " + ((100 * won) / runs).toFixed(0) + "%, hours left on win " + (won ? (left / won).toFixed(1) : "-"));
-console.log("runs that conquered everything and still lost: " + deadEnds);
+console.log("runs that conquered everything and still lost: " + deadEnds + "; wins that used Q/E: " + tradedRuns);
+console.log("avg hours bought " + (boughtH / runs).toFixed(1) + ", worked " + (workedH / runs).toFixed(1) + "; avg gold on a loss " + (lostRuns ? (lostGold / lostRuns).toFixed(0) : "-"));
 console.log("per run: " + (clears / runs).toFixed(1) + " places cleared, " + (losses / runs).toFixed(1) + " fights lost, ~" + (realSecs / runs / 60).toFixed(1) + " real minutes");
