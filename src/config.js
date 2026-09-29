@@ -19,9 +19,11 @@
     BRIDGE_HALF: 55,
 
     // Losing a fight.
-    // You drop this share of the tier's bounty. It stays at the place as a stash:
-    // win there later and you get it back.
+    // Losing drops this share of the tier's bounty. Part of it is gone for good;
+    // the rest stays at the place and comes back when you win there. Losing on
+    // purpose to park gold therefore always costs money.
     LOSE_BOUNTY_SHARE: 0.5,
+    STASH_SHARE: 0.5, // share of the dropped gold you can win back
     MERCY: 0.1, // each loss at a place: enemies get 10% less health
 
     // Optional training at a Shooting Range. Pass the drill to gain a skill level.

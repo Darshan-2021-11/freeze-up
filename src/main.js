@@ -220,14 +220,14 @@
         : next.patrol
           ? a.def.name + " is conquered! Patrols here pay " + next.reward + " gold each."
           : "Tier " + FU.TIER_NAMES[place.tier] + " is now open here: bounty " + next.reward + " gold.";
-      const back = got.stash ? ", plus the <b>" + got.stash + " gold</b> you dropped here" : "";
+      const back = got.stash ? ", plus the <b>" + got.stash + " gold</b> you left here" : "";
       message("You won in " + Math.round(a.time) + "s!", "You took <b>" + got.reward + " gold</b>" + back + ". " + after, "Continue", "gold-nuggets", null);
     } else {
-      const lost = FU.loseFight(s, place);
+      const drop = FU.loseFight(s, place);
       play("error", 0.6);
       message(
         "You lost",
-        "You dropped <b>" + lost + " gold</b> here. Win at " + a.def.name + " later to get it back. The enemies are a bit weaker now. Fight again right away, or walk away and come back stronger (the Shooting Range can train you).",
+        "You lost <b>" + drop.lost + " gold</b>. Half is gone; the other <b>" + drop.kept + " gold</b> waits here until you win at " + a.def.name + ". The enemies are a bit weaker now. Fight again right away, or walk away and come back stronger (the Shooting Range can train you).",
         "Rematch now",
         "crossed-pistols",
         startFight,

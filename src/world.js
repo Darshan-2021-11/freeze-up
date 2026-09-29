@@ -52,7 +52,7 @@
       y: p.y,
       tier: 0, // next tier to fight; 3 means conquered
       losses: 0, // losses at the current tier
-      stash: 0, // gold you dropped here; won back with the next win
+      stash: 0, // part of the gold lost here; won back with the next win
     }));
 
     const trees = [];

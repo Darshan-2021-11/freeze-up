@@ -23,12 +23,13 @@ the top level) and upload it as an HTML game.
   a harder, better-paid one. The popup shows the exact enemies and a tip.
 - **Bounty clock.** Each tier pays its full bounty if you win within a par time,
   then the bounty drops, down to half. Time is money inside fights too.
-- **No running away.** A started fight can't be left. If you lose, you drop half
-  that tier's bounty at the place, then choose: rematch now, or walk away. Win there
-  later and you get the dropped gold back, so a loss mostly costs time. Each loss
-  weakens that tier a little (up to 3 losses), so nobody is stuck forever.
+- **No running away.** A started fight can't be left. If you lose, you lose half
+  that tier's bounty. Half of that is gone for good; the other half stays at the place
+  and comes back when you win there (so losing on purpose to park gold never pays).
+  Then choose: rematch now, or walk away. Each loss weakens that tier a little
+  (up to 3 losses), so nobody is stuck forever.
 - **Gold left on the map.** The HUD shows how much gold is still winnable (open
-  bounties plus dropped gold) and warns when the ticket is out of reach by fighting
+  bounties plus gold waiting to be won back) and warns when the ticket is out of reach by fighting
   alone.
 - **Fair hits.** Enemies warn before attacking ("!", crouch, raised paw, glow).
   Touching never hurts; hits knock you back and give 1 second of safety.

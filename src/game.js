@@ -143,12 +143,13 @@
     const C = FU.CONFIG;
     const tier = FU.nextTier(place);
     const lost = Math.min(s.gold, Math.ceil(tier.reward * C.LOSE_BOUNTY_SHARE));
+    const kept = Math.floor(lost * C.STASH_SHARE);
     s.gold -= lost;
-    place.stash += lost;
+    place.stash += kept;
     place.losses = Math.min(3, place.losses + 1);
     s.stats.losses += 1;
-    log(s, "You lost at " + FU.PLACES[place.kind].name + " and dropped " + lost + " gold there.", "bad");
-    return lost;
+    log(s, "You lost " + lost + " gold at " + FU.PLACES[place.kind].name + ". " + kept + " of it can be won back there.", "bad");
+    return { lost, kept };
   };
 
   // Most gold still to be won on the map: full bounties of every open tier plus stashes.

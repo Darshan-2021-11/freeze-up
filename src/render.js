@@ -97,7 +97,7 @@
       label(ctx, def.name + " " + "★".repeat(def.stars), p.x, p.y + 48, 14, INK);
       const sub = done ? "Conquered · patrol " + tier.reward + " gold" : "Tier " + FU.TIER_NAMES[p.tier] + " · up to " + tier.reward + " gold";
       label(ctx, sub, p.x, p.y + 67, 12, done ? "#7a6f5c" : INK);
-      if (p.stash) label(ctx, p.stash + " gold dropped here", p.x, p.y - 48, 12, "#9b2c2c");
+      if (p.stash) label(ctx, p.stash + " gold to win back here", p.x, p.y - 48, 12, "#9b2c2c");
       else if (p.losses) label(ctx, "Lost here " + p.losses + "x (weaker now)", p.x, p.y - 48, 11, "#9b2c2c");
     }
 
