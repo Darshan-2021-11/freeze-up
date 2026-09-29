@@ -203,6 +203,7 @@
 
       // Enemies
       for (const e of a.enemies) updateEnemy(a, e, dt, rng);
+      separate(a);
       a.enemies = a.enemies.filter((e) => e.hp > 0);
 
       // Enemy shots
@@ -211,7 +212,7 @@
         b.y += b.vy * dt;
         if (hitsRock(b.x, b.y, a.rocks) || b.x < 0 || b.y < 0 || b.x > W || b.y > H) b.dead = true;
         else if (Math.hypot(b.x - p.x, b.y - p.y) < 18 && p.inv <= 0) {
-          hurtPlayer(a, 1);
+          hurtPlayer(a, 1, { x: b.x - b.vx, y: b.y - b.vy });
           b.dead = true;
         }
       }
@@ -227,7 +228,7 @@
         for (const e of a.enemies) {
           if (Math.hypot(e.x - b.x, e.y - b.y) <= w.radius + FU.ENEMIES[e.kind].radius) hurtEnemy(a, e, w.dmg, e.x - b.x, e.y - b.y);
         }
-        if (Math.hypot(p.x - b.x, p.y - b.y) <= w.radius && p.inv <= 0) hurtPlayer(a, 1);
+        if (Math.hypot(p.x - b.x, p.y - b.y) <= w.radius && p.inv <= 0) hurtPlayer(a, 1, b);
       }
       a.bombs = a.bombs.filter((b) => b.t > 0);
       a.enemies = a.enemies.filter((e) => e.hp > 0);
@@ -262,7 +263,8 @@
         stateT: 0,
         strafe: rng.chance(0.5) ? 1 : -1,
         strafeT: roll(rng, [1, 2.5]),
-        touchCd: 0.5,
+        atkCd: 0.6,
+        hit: false,
         flash: 0,
         cx: 0,
         cy: 0,
@@ -314,14 +316,45 @@
     const ux = dx / dist;
     const uy = dy / dist;
     e.flash = Math.max(0, e.flash - dt);
-    e.touchCd = Math.max(0, e.touchCd - dt);
+    e.atkCd = Math.max(0, e.atkCd - dt);
     let vx = 0;
     let vy = 0;
+    const near = dist < def.radius + 16 + (def.reach || 0);
 
     if (e.kind === "wolf") {
-      const wob = Math.sin(a.time * 4 + e.phase) * 0.6;
-      vx = (ux * Math.cos(wob) - uy * Math.sin(wob)) * def.speed;
-      vy = (uy * Math.cos(wob) + ux * Math.sin(wob)) * def.speed;
+      // Wolves crouch (a warning), lunge, then back off before the next bite.
+      if (e.state === "crouch") {
+        e.stateT -= dt;
+        if (e.stateT <= 0) {
+          e.state = "lunge";
+          e.stateT = def.lungeTime;
+          e.hit = false;
+        }
+      } else if (e.state === "lunge") {
+        vx = e.cx * def.lungeSpeed;
+        vy = e.cy * def.lungeSpeed;
+        e.stateT -= dt;
+        if (e.stateT <= 0) {
+          e.state = "recover";
+          e.stateT = def.recover;
+        }
+      } else if (e.state === "recover") {
+        vx = -ux * def.speed * 0.4;
+        vy = -uy * def.speed * 0.4;
+        e.stateT -= dt;
+        if (e.stateT <= 0) e.state = "move";
+      } else {
+        const wob = Math.sin(a.time * 4 + e.phase) * 0.6;
+        vx = (ux * Math.cos(wob) - uy * Math.sin(wob)) * def.speed;
+        vy = (uy * Math.cos(wob) + ux * Math.sin(wob)) * def.speed;
+        if (near && e.atkCd <= 0) {
+          e.state = "crouch";
+          e.stateT = def.windup;
+          e.cx = ux;
+          e.cy = uy;
+          e.atkCd = def.attackEvery;
+        }
+      }
     } else if (e.kind === "bandit") {
       const toward = dist > def.keep[1] ? 1 : dist < def.keep[0] ? -1 : 0;
       e.strafeT -= dt;
@@ -356,17 +389,29 @@
         vx = ux * def.speed;
         vy = uy * def.speed;
         e.chargeT -= dt;
-        if (e.chargeT <= 0) {
+        if (near && e.atkCd <= 0) {
+          // Close up, the bear raises a paw first: a swipe you can dodge.
+          e.state = "swipe";
+          e.stateT = def.swipeWindup;
+        } else if (e.chargeT <= 0) {
           e.state = "windup";
           e.stateT = def.windup;
           e.cx = ux;
           e.cy = uy;
+        }
+      } else if (e.state === "swipe") {
+        e.stateT -= dt;
+        if (e.stateT <= 0) {
+          if (dist < def.radius + 16 + def.reach + 15 && p.inv <= 0) hurtPlayer(a, def.touch, e);
+          e.atkCd = def.attackEvery;
+          e.state = "move";
         }
       } else if (e.state === "windup") {
         e.stateT -= dt;
         if (e.stateT <= 0) {
           e.state = "charge";
           e.stateT = def.chargeTime;
+          e.hit = false;
         }
       } else if (e.state === "charge") {
         vx = e.cx * def.chargeSpeed;
@@ -396,15 +441,48 @@
     }
     clampField(e, def.radius);
 
-    if (dist < def.radius + 16 && e.touchCd <= 0 && p.inv <= 0) {
-      hurtPlayer(a, def.touch);
-      e.touchCd = 0.8;
-      e.x -= ux * 30;
-      e.y -= uy * 30;
+    // Touching alone never hurts. Only a lunge or a charge that reaches you does, once.
+    const touching = Math.hypot(p.x - e.x, p.y - e.y) < def.radius + 20;
+    if (touching && (e.state === "lunge" || e.state === "charge") && !e.hit && p.inv <= 0) {
+      hurtPlayer(a, def.touch, e);
+      e.hit = true;
       if (e.state === "charge") {
         e.state = "move";
         e.chargeT = roll(rng, def.chargeEvery);
+        e.atkCd = def.attackEvery;
       }
+    }
+  }
+
+  // Enemies can't stand inside each other or inside the player.
+  function separate(a) {
+    const p = a.player;
+    const list = a.enemies;
+    for (let i = 0; i < list.length; i++) {
+      const e = list[i];
+      const r = FU.ENEMIES[e.kind].radius;
+      for (let j = i + 1; j < list.length; j++) {
+        const o = list[j];
+        const ro = FU.ENEMIES[o.kind].radius;
+        const dx = e.x - o.x;
+        const dy = e.y - o.y;
+        const d = Math.hypot(dx, dy) || 1;
+        if (d < r + ro) {
+          const push = (r + ro - d) / 2;
+          e.x += (dx / d) * push;
+          e.y += (dy / d) * push;
+          o.x -= (dx / d) * push;
+          o.y -= (dy / d) * push;
+        }
+      }
+      const dx = e.x - p.x;
+      const dy = e.y - p.y;
+      const d = Math.hypot(dx, dy) || 1;
+      if (d < r + 18) {
+        e.x = p.x + (dx / d) * (r + 18);
+        e.y = p.y + (dy / d) * (r + 18);
+      }
+      clampField(e, r);
     }
   }
 
@@ -420,10 +498,18 @@
     if (e.hp <= 0) a.fx.push({ type: "text", x: e.x, y: e.y - 40, t: 0.8, text: "Down!" });
   }
 
-  function hurtPlayer(a, n) {
+  // Hits knock the player back, then give a moment of safety.
+  function hurtPlayer(a, n, src) {
     const p = a.player;
     p.hp -= n;
     p.inv = FU.CONFIG.INVULNERABLE;
+    if (src) {
+      const d = Math.hypot(p.x - src.x, p.y - src.y) || 1;
+      p.x += ((p.x - src.x) / d) * 45;
+      p.y += ((p.y - src.y) / d) * 45;
+      pushOut(p, 16, a.rocks);
+      clampField(p, 16);
+    }
     a.events.push("hurt");
     a.fx.push({ type: "text", x: p.x, y: p.y - 44, t: 0.9, text: "-" + n + " heart" + (n > 1 ? "s" : ""), bad: true });
   }

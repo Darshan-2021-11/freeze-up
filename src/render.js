@@ -258,7 +258,7 @@
     // Enemies
     for (const e of a.enemies.slice().sort((m, n) => m.y - n.y)) {
       const def = FU.ENEMIES[e.kind];
-      const shake = e.state === "windup" ? Math.sin(a.time * 60) * 3 : 0;
+      const shake = ["windup", "crouch", "swipe"].includes(e.state) ? Math.sin(a.time * 60) * 3 : 0;
       ctx.fillStyle = "rgba(0,0,0,0.15)";
       ctx.beginPath();
       ctx.ellipse(e.x, e.y + def.radius * 0.8, def.radius, 7, 0, 0, Math.PI * 2);
@@ -276,7 +276,7 @@
       ctx.fillRect(e.x - bw / 2, e.y - def.radius - 16, bw, 5);
       ctx.fillStyle = "#c0392b";
       ctx.fillRect(e.x - bw / 2, e.y - def.radius - 16, (bw * Math.max(0, e.hp)) / e.maxHp, 5);
-      if (e.state === "aim") label(ctx, "!", e.x, e.y - def.radius - 30, 22, "#9b2c2c", true);
+      if (["aim", "crouch", "swipe"].includes(e.state)) label(ctx, "!", e.x, e.y - def.radius - 30, 22, "#9b2c2c", true);
       if (e.state === "stun") label(ctx, "Stunned", e.x, e.y - def.radius - 30, 14, INK, true);
     }
 

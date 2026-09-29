@@ -18,7 +18,8 @@
   let place = null; // the place being fought
   let town = null; // the shop that is open
   let onMessage = null;
-  let onSecond = null; // second button of a message, if any
+  let onSecond = null; // second button's action, if any
+  let hasSecond = false;
   let helpLeft = 0;
   let mouse = null;
   let mouseDown = false;
@@ -82,17 +83,20 @@
   function message(title, text, button, icon, then, second) {
     onMessage = then;
     onSecond = second ? second.then : null;
+    hasSecond = !!second;
     mode = "message";
     FU.UI.showMessage(title, text, button, icon, second ? second.label : null);
   }
 
   function messageOk(useSecond) {
     if (mode !== "message") return;
-    if (useSecond && !onSecond) return;
+    // A second button with no action just closes the popup.
+    if (useSecond && !hasSecond) return;
     FU.UI.hidePopup();
     const then = useSecond ? onSecond : onMessage;
     onMessage = null;
     onSecond = null;
+    hasSecond = false;
     setMode("world");
     if (then) then();
   }

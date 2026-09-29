@@ -47,7 +47,7 @@
 
     START_HEARTS: 5,
     MAX_HEARTS: 9,
-    INVULNERABLE: 0.7, // seconds after being hit
+    INVULNERABLE: 1.0, // seconds after being hit
     DASH_TIME: 0.18,
     DASH_COOLDOWN: 1.1,
     DASH_SPEED: 3.2,
@@ -90,7 +90,23 @@
   ];
 
   FU.ENEMIES = {
-    wolf: { name: "Wolf", plural: "Wolves", icon: "direwolf", color: "#4b4f57", hp: 2, speed: 185, radius: 22, touch: 1 },
+    wolf: {
+      name: "Wolf",
+      plural: "Wolves",
+      icon: "direwolf",
+      color: "#4b4f57",
+      hp: 2,
+      speed: 185,
+      radius: 22,
+      touch: 1,
+      // Bite: crouch (warning), lunge, back off.
+      reach: 55,
+      windup: 0.35,
+      lungeSpeed: 520,
+      lungeTime: 0.22,
+      recover: 0.45,
+      attackEvery: 1.2,
+    },
     bandit: {
       name: "Bandit",
       plural: "Bandits",
@@ -119,6 +135,10 @@
       windup: 0.6,
       chargeSpeed: 430,
       chargeTime: 0.7,
+      // Swipe when close: raise a paw (warning), then hit.
+      reach: 30,
+      swipeWindup: 0.5,
+      attackEvery: 1.6,
     },
   };
 })(typeof window !== "undefined" ? window : globalThis);
