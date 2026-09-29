@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Freeze-Up</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header id="hud">
+      <div class="stat clock">
+        <span class="label">Time left</span>
+        <span class="value" id="hud-hours">--</span>
+        <div class="bar"><div id="hud-hours-bar"></div></div>
+      </div>
+      <div class="stat">
+        <span class="label">Gold</span>
+        <span class="value" id="hud-gold">--</span>
+        <span class="sub" id="hud-weight">--</span>
+      </div>
+      <div class="stat">
+        <span class="label">Ticket home</span>
+        <span class="value" id="hud-goal">--</span>
+      </div>
+      <div class="stat">
+        <span class="label">Hearts &amp; ammo</span>
+        <span class="ammo" id="hud-gear"></span>
+      </div>
+      <div class="stat trade">
+        <span class="label">Trade (hold)</span>
+        <span class="row">
+          <button id="btn-work" title="Hold Q: spend time to earn gold">Q: 1h → <span id="work-rate"></span> gold</button>
+          <button id="btn-buy" title="Hold E: spend gold to get time back">E: <span id="buy-rate"></span> gold → 1h</button>
+        </span>
+      </div>
+      <div class="stat buttons">
+        <button id="btn-help" title="How to play">?</button>
+        <button id="btn-sound" title="Sound on or off (M)">Sound</button>
+        <button id="btn-pause" title="Pause (P)">Pause</button>
+      </div>
+    </header>
+
+    <main id="stage">
+      <canvas id="map"></canvas>
+      <div id="tip" hidden></div>
+      <div id="popup" hidden></div>
+      <div id="code-tag"></div>
+      <div id="prompt" hidden></div>
+    </main>
+
+    <footer id="panel">
+      <div class="here">
+        <h2 id="here-name">--</h2>
+        <p id="here-desc"></p>
+        <div id="here-actions"></div>
+        <p class="hint" id="here-hint"></p>
+      </div>
+      <ul id="log"></ul>
+    </footer>
+
+    <section class="overlay" id="title-screen">
+      <div class="card">
+        <p class="kicker">Gold rush, Canada, 1898</p>
+        <h1>Freeze-Up</h1>
+        <p>
+          Winter is coming. The last boat home leaves Dawson before the river freezes. The ticket costs
+          <b id="title-target">150</b> gold.
+        </p>
+        <p>
+          <b>Time is money.</b> Fight for gold. Work for gold. Buy back time. Every second counts, and every fight
+          must be won.
+        </p>
+        <label class="code">
+          Map code
+          <span class="row">
+            <input id="code-input" type="text" maxlength="24" autocomplete="off" spellcheck="false" />
+            <button id="btn-random">New code</button>
+          </span>
+          <small>Same code = same map. Share it with friends to compare scores.</small>
+        </label>
+        <div class="row">
+          <button id="btn-start" class="primary">Start</button>
+          <button id="btn-howto">How to play</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay" id="tutorial" hidden>
+      <div class="card tutorial">
+        <div class="tut-icons" id="tut-icons"></div>
+        <h2 id="tut-title"></h2>
+        <p id="tut-text"></p>
+        <div class="dots" id="tut-dots"></div>
+        <div class="row">
+          <button id="tut-back">Back</button>
+          <button id="tut-next" class="primary">Next</button>
+          <button id="tut-skip" class="link">Skip</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay" id="pause-screen" hidden>
+      <div class="card">
+        <h1>Paused</h1>
+        <p>The clock is stopped. The screen is hidden while paused.</p>
+        <button id="btn-resume" class="primary">Resume</button>
+      </div>
+    </section>
+
+    <section class="overlay" id="end-screen" hidden>
+      <div class="card">
+        <p class="kicker" id="end-kicker"></p>
+        <h1 id="end-title"></h1>
+        <p id="end-reason"></p>
+        <dl id="end-stats"></dl>
+        <div class="row">
+          <button id="btn-retry" class="primary">Play this map again</button>
+          <button id="btn-new">New map</button>
+        </div>
+      </div>
+    </section>
+
+    <script src="src/config.js"></script>
+    <script src="src/rng.js"></script>
+    <script src="src/icons.js"></script>
+    <script src="src/assets.js"></script>
+    <script src="src/world.js"></script>
+    <script src="src/arena.js"></script>
+    <script src="src/game.js"></script>
+    <script src="src/render.js"></script>
+    <script src="src/ui.js"></script>
+    <script src="src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,477 @@
+// Fights and training. Top-down arena: move with WASD, aim with the mouse,
+// click to fire, Space to dash. Uses a fixed 960x600 field.
+(function (g) {
+  const FU = (g.FU = g.FU || {});
+
+  const W = 960;
+  const H = 600;
+  const START = { x: 120, y: 300 };
+
+  function roll(rng, range) {
+    return range[0] + rng.next() * (range[1] - range[0]);
+  }
+
+  function pushOut(obj, r, rocks) {
+    for (const k of rocks) {
+      const dx = obj.x - k.x;
+      const dy = obj.y - k.y;
+      const d = Math.hypot(dx, dy) || 1;
+      if (d < k.r + r) {
+        obj.x = k.x + (dx / d) * (k.r + r);
+        obj.y = k.y + (dy / d) * (k.r + r);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function clampField(obj, r) {
+    obj.x = Math.max(r, Math.min(W - r, obj.x));
+    obj.y = Math.max(r, Math.min(H - r, obj.y));
+  }
+
+  function hitsRock(x, y, rocks) {
+    return rocks.some((k) => Math.hypot(x - k.x, y - k.y) < k.r);
+  }
+
+  FU.Arena = {
+    W,
+    H,
+
+    create(s, place) {
+      const C = FU.CONFIG;
+      const rng = s.rng;
+      const def = FU.PLACES[place.kind];
+
+      // Enemy groups, one per wave, fixed per place. Losses here weaken enemies;
+      // from the second loss on, one fewer enemy too.
+      let remove = Math.max(0, place.losses - 1);
+      const waves = (place.waves || FU.rollWaves(rng, place.kind)).map((w) => w.slice());
+      for (let i = waves.length - 1; i >= 0 && remove > 0; i--) {
+        while (waves[i].length > 1 && remove > 0) {
+          waves[i].pop();
+          remove--;
+        }
+      }
+
+      const rocks = [];
+      const rockCount = rng.int(3, 6);
+      for (let tries = 0; rocks.length < rockCount && tries < 200; tries++) {
+        const k = { x: rng.int(240, W - 170), y: rng.int(70, H - 70), r: rng.int(26, 48) };
+        if (Math.hypot(k.x - START.x, k.y - START.y) < 180) continue;
+        if (rocks.some((o) => Math.hypot(o.x - k.x, o.y - k.y) < o.r + k.r + 60)) continue;
+        rocks.push(k);
+      }
+
+      const maxHp = s.maxHearts;
+      const T = C.TRAINING;
+      const skill = s.skill || 0;
+      const a = {
+        place,
+        def,
+        waves,
+        wave: 0,
+        hpMult: Math.max(0.5, 1 - C.MERCY * place.losses),
+        enemies: [],
+        shots: [],
+        foeShots: [],
+        bombs: [],
+        rocks,
+        fx: [],
+        events: [],
+        player: { x: START.x, y: START.y, hp: maxHp, maxHp, inv: 0, dash: 0, dashCd: 0, aim: 0 },
+        weapon: "revolver",
+        mag: { revolver: FU.WEAPONS.revolver.mag, shotgun: Math.min(FU.WEAPONS.shotgun.mag, s.ammo.shells) },
+        reloadLeft: 0,
+        cooldown: 0,
+        // Training makes you faster and gives a chance of double damage.
+        crit: T.crit * skill,
+        fireMult: 1 - T.fireRate * skill,
+        reloadMult: 1 - T.reload * skill,
+        waveDelay: 0.6,
+        time: 0,
+        done: false,
+        won: false,
+      };
+      return a;
+    },
+
+    canUse(a, s, id) {
+      if (!s.weapons[id]) return false;
+      const w = FU.WEAPONS[id];
+      return !w.ammo || s.ammo[w.ammo] > 0;
+    },
+
+    ammoText(a, s, id) {
+      const w = FU.WEAPONS[id];
+      if (id === "revolver") return a.mag.revolver + " / ∞";
+      if (w.mag) return a.mag[id] + " / " + s.ammo[w.ammo];
+      return String(s.ammo[w.ammo]);
+    },
+
+    switchWeapon(a, s, id) {
+      if (a.done || a.weapon === id || !FU.Arena.canUse(a, s, id)) return;
+      a.weapon = id;
+      a.reloadLeft = 0;
+      a.events.push("reload");
+    },
+
+    reload(a, s) {
+      const id = a.weapon;
+      const w = FU.WEAPONS[id];
+      if (!w.mag || a.reloadLeft > 0 || a.mag[id] >= w.mag) return;
+      if (w.ammo && s.ammo[w.ammo] <= a.mag[id]) return;
+      a.reloadLeft = w.reload * a.reloadMult;
+      a.events.push("reload");
+    },
+
+    // input: { dx, dy, aimX, aimY, fire, dash, reload }
+    update(a, s, dt, input) {
+      if (a.done) return;
+      const C = FU.CONFIG;
+      const rng = s.rng;
+      const p = a.player;
+      a.time += dt;
+
+      // Waves
+      if (a.enemies.length === 0 && a.bombs.length === 0) {
+        a.waveDelay -= dt;
+        if (a.waveDelay <= 0) {
+          if (a.wave >= a.waves.length) {
+            a.done = true;
+            a.won = true;
+            return;
+          }
+          spawnWave(a, rng, a.waves[a.wave]);
+          a.wave += 1;
+          a.waveDelay = 1;
+        }
+      }
+
+      // Player movement and dash
+      p.inv = Math.max(0, p.inv - dt);
+      p.dashCd = Math.max(0, p.dashCd - dt);
+      p.dash = Math.max(0, p.dash - dt);
+      if (input.dash && p.dashCd <= 0 && (input.dx || input.dy)) {
+        p.dash = C.DASH_TIME;
+        p.dashCd = C.DASH_COOLDOWN;
+        p.inv = Math.max(p.inv, C.DASH_TIME + 0.05);
+        a.events.push("step");
+      }
+      const len = Math.hypot(input.dx, input.dy) || 1;
+      const speed = C.ARENA_SPEED * (p.dash > 0 ? C.DASH_SPEED : 1);
+      const ox = p.x;
+      const oy = p.y;
+      p.x += (input.dx / len) * speed * dt;
+      p.y += (input.dy / len) * speed * dt;
+      pushOut(p, 16, a.rocks);
+      clampField(p, 16);
+      p.vx = (p.x - ox) / dt;
+      p.vy = (p.y - oy) / dt;
+      p.aim = Math.atan2(input.aimY - p.y, input.aimX - p.x);
+
+      // Weapons
+      a.cooldown = Math.max(0, a.cooldown - dt);
+      if (a.reloadLeft > 0) {
+        a.reloadLeft -= dt;
+        if (a.reloadLeft <= 0) {
+          const w = FU.WEAPONS[a.weapon];
+          a.mag[a.weapon] = w.ammo ? Math.min(w.mag, s.ammo[w.ammo]) : w.mag;
+          a.reloadLeft = 0;
+        }
+      }
+      if (input.reload) FU.Arena.reload(a, s);
+      if (input.fire) fire(a, s, input);
+
+      // Player shots
+      for (const b of a.shots) {
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        b.life -= dt;
+        if (hitsRock(b.x, b.y, a.rocks) || b.x < 0 || b.y < 0 || b.x > W || b.y > H) b.life = 0;
+        if (b.life <= 0) continue;
+        for (const e of a.enemies) {
+          if (Math.hypot(e.x - b.x, e.y - b.y) < FU.ENEMIES[e.kind].radius + 4) {
+            hurtEnemy(a, e, b.dmg, b.vx, b.vy);
+            if (b.crit) a.fx.push({ type: "text", x: e.x, y: e.y - 30, t: 0.6, text: "Crit!" });
+            b.life = 0;
+            break;
+          }
+        }
+      }
+      a.shots = a.shots.filter((b) => b.life > 0);
+
+      // Enemies
+      for (const e of a.enemies) updateEnemy(a, e, dt, rng);
+      a.enemies = a.enemies.filter((e) => e.hp > 0);
+
+      // Enemy shots
+      for (const b of a.foeShots) {
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        if (hitsRock(b.x, b.y, a.rocks) || b.x < 0 || b.y < 0 || b.x > W || b.y > H) b.dead = true;
+        else if (Math.hypot(b.x - p.x, b.y - p.y) < 18 && p.inv <= 0) {
+          hurtPlayer(a, 1);
+          b.dead = true;
+        }
+      }
+      a.foeShots = a.foeShots.filter((b) => !b.dead);
+
+      // Dynamite
+      for (const b of a.bombs) {
+        b.t -= dt;
+        if (b.t > 0) continue;
+        const w = FU.WEAPONS.dynamite;
+        a.events.push("dynamite");
+        a.fx.push({ type: "boom", x: b.x, y: b.y, t: 0.5, r: w.radius });
+        for (const e of a.enemies) {
+          if (Math.hypot(e.x - b.x, e.y - b.y) <= w.radius + FU.ENEMIES[e.kind].radius) hurtEnemy(a, e, w.dmg, e.x - b.x, e.y - b.y);
+        }
+        if (Math.hypot(p.x - b.x, p.y - b.y) <= w.radius && p.inv <= 0) hurtPlayer(a, 1);
+      }
+      a.bombs = a.bombs.filter((b) => b.t > 0);
+      a.enemies = a.enemies.filter((e) => e.hp > 0);
+
+      for (const f of a.fx) f.t -= dt;
+      a.fx = a.fx.filter((f) => f.t > 0);
+
+      if (p.hp <= 0) {
+        a.done = true;
+        a.won = false;
+      }
+    },
+  };
+
+  // A wave enters together from the right edge, spread evenly top to bottom.
+  function spawnWave(a, rng, kinds) {
+    kinds.forEach(function (kind, i) {
+      const def = FU.ENEMIES[kind];
+      const y = Math.round(((i + 1) / (kinds.length + 1)) * H + rng.int(-25, 25));
+      const x = W - def.radius - 6 - (i % 2) * 40;
+      const hp = Math.max(1, Math.round(def.hp * a.hpMult));
+      a.enemies.push({
+        kind,
+        x,
+        y,
+        hp,
+        maxHp: hp,
+        phase: rng.next() * 6.28,
+        shootT: def.shootEvery ? roll(rng, def.shootEvery) : 0,
+        chargeT: def.chargeEvery ? roll(rng, def.chargeEvery) : 0,
+        state: "move",
+        stateT: 0,
+        strafe: rng.chance(0.5) ? 1 : -1,
+        strafeT: roll(rng, [1, 2.5]),
+        touchCd: 0.5,
+        flash: 0,
+        cx: 0,
+        cy: 0,
+      });
+    });
+  }
+
+  function fire(a, s, input) {
+    if (a.cooldown > 0 || a.reloadLeft > 0) return;
+    const id = a.weapon;
+    const w = FU.WEAPONS[id];
+    const p = a.player;
+    const rng = s.rng;
+
+    if (id === "dynamite") {
+      if (s.ammo.dynamite <= 0) return FU.Arena.switchWeapon(a, s, "revolver");
+      s.ammo.dynamite -= 1;
+      const d = Math.min(420, Math.hypot(input.aimX - p.x, input.aimY - p.y));
+      a.bombs.push({ x: p.x + Math.cos(p.aim) * d, y: p.y + Math.sin(p.aim) * d, t: w.fuse });
+      a.cooldown = w.cooldown;
+      a.events.push("reload");
+      if (s.ammo.dynamite <= 0) a.weapon = "revolver";
+      return;
+    }
+
+    if (a.mag[id] <= 0) {
+      if (w.ammo && s.ammo[w.ammo] <= 0) return FU.Arena.switchWeapon(a, s, "revolver");
+      return FU.Arena.reload(a, s);
+    }
+    a.mag[id] -= 1;
+    if (w.ammo) s.ammo[w.ammo] -= 1;
+    a.cooldown = w.cooldown * a.fireMult;
+    a.events.push(id);
+    for (let i = 0; i < w.pellets; i++) {
+      const ang = p.aim + (rng.next() - 0.5) * 2 * w.spread;
+      const crit = rng.chance(a.crit);
+      a.shots.push({ x: p.x + Math.cos(p.aim) * 24, y: p.y + Math.sin(p.aim) * 24, vx: Math.cos(ang) * w.speed, vy: Math.sin(ang) * w.speed, life: w.range / w.speed, dmg: w.dmg * (crit ? 2 : 1), crit });
+    }
+    a.fx.push({ type: "flash", x: p.x + Math.cos(p.aim) * 30, y: p.y + Math.sin(p.aim) * 30, t: 0.08 });
+    if (a.mag[id] <= 0 && (!w.ammo || s.ammo[w.ammo] > 0)) FU.Arena.reload(a, s);
+  }
+
+  function updateEnemy(a, e, dt, rng) {
+    const def = FU.ENEMIES[e.kind];
+    const p = a.player;
+    const dx = p.x - e.x;
+    const dy = p.y - e.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    const ux = dx / dist;
+    const uy = dy / dist;
+    e.flash = Math.max(0, e.flash - dt);
+    e.touchCd = Math.max(0, e.touchCd - dt);
+    let vx = 0;
+    let vy = 0;
+
+    if (e.kind === "wolf") {
+      const wob = Math.sin(a.time * 4 + e.phase) * 0.6;
+      vx = (ux * Math.cos(wob) - uy * Math.sin(wob)) * def.speed;
+      vy = (uy * Math.cos(wob) + ux * Math.sin(wob)) * def.speed;
+    } else if (e.kind === "bandit") {
+      const toward = dist > def.keep[1] ? 1 : dist < def.keep[0] ? -1 : 0;
+      e.strafeT -= dt;
+      if (e.strafeT <= 0) {
+        e.strafe = -e.strafe;
+        e.strafeT = roll(rng, [1, 2.5]);
+      }
+      vx = (ux * toward - uy * e.strafe * 0.7) * def.speed;
+      vy = (uy * toward + ux * e.strafe * 0.7) * def.speed;
+      if (e.state === "aim") {
+        vx *= 0.2;
+        vy *= 0.2;
+        e.stateT -= dt;
+        if (e.stateT <= 0) {
+          // Bandits lead their shots a little: keep changing direction.
+          const lead = (dist / def.bulletSpeed) * def.lead;
+          const ang = Math.atan2(dy + (p.vy || 0) * lead, dx + (p.vx || 0) * lead) + (rng.next() - 0.5) * 0.16;
+          a.foeShots.push({ x: e.x + Math.cos(ang) * 26, y: e.y + Math.sin(ang) * 26, vx: Math.cos(ang) * def.bulletSpeed, vy: Math.sin(ang) * def.bulletSpeed });
+          a.events.push("revolver");
+          e.state = "move";
+          e.shootT = roll(rng, def.shootEvery);
+        }
+      } else {
+        e.shootT -= dt;
+        if (e.shootT <= 0) {
+          e.state = "aim";
+          e.stateT = def.windup;
+        }
+      }
+    } else if (e.kind === "bear") {
+      if (e.state === "move") {
+        vx = ux * def.speed;
+        vy = uy * def.speed;
+        e.chargeT -= dt;
+        if (e.chargeT <= 0) {
+          e.state = "windup";
+          e.stateT = def.windup;
+          e.cx = ux;
+          e.cy = uy;
+        }
+      } else if (e.state === "windup") {
+        e.stateT -= dt;
+        if (e.stateT <= 0) {
+          e.state = "charge";
+          e.stateT = def.chargeTime;
+        }
+      } else if (e.state === "charge") {
+        vx = e.cx * def.chargeSpeed;
+        vy = e.cy * def.chargeSpeed;
+        e.stateT -= dt;
+        if (e.stateT <= 0) {
+          e.state = "move";
+          e.chargeT = roll(rng, def.chargeEvery);
+        }
+      } else if (e.state === "stun") {
+        e.stateT -= dt;
+        if (e.stateT <= 0) {
+          e.state = "move";
+          e.chargeT = roll(rng, def.chargeEvery);
+        }
+      }
+    }
+
+    e.x += vx * dt;
+    e.y += vy * dt;
+    // A charging bear that slams into a rock is stunned: a chance to hit back.
+    if (pushOut(e, def.radius, a.rocks) && e.state === "charge") {
+      e.state = "stun";
+      e.stateT = 1.2;
+      a.events.push("hit");
+      a.fx.push({ type: "text", x: e.x, y: e.y - 50, t: 1, text: "Stunned!" });
+    }
+    clampField(e, def.radius);
+
+    if (dist < def.radius + 16 && e.touchCd <= 0 && p.inv <= 0) {
+      hurtPlayer(a, def.touch);
+      e.touchCd = 0.8;
+      e.x -= ux * 30;
+      e.y -= uy * 30;
+      if (e.state === "charge") {
+        e.state = "move";
+        e.chargeT = roll(rng, def.chargeEvery);
+      }
+    }
+  }
+
+  function hurtEnemy(a, e, dmg, kx, ky) {
+    if (e.hp <= 0) return;
+    e.hp -= dmg;
+    e.flash = 0.12;
+    const k = Math.hypot(kx, ky) || 1;
+    const push = e.kind === "bear" ? 4 : 12;
+    e.x += (kx / k) * push;
+    e.y += (ky / k) * push;
+    a.events.push("hit");
+    if (e.hp <= 0) a.fx.push({ type: "text", x: e.x, y: e.y - 40, t: 0.8, text: "Down!" });
+  }
+
+  function hurtPlayer(a, n) {
+    const p = a.player;
+    p.hp -= n;
+    p.inv = FU.CONFIG.INVULNERABLE;
+    a.events.push("hurt");
+    a.fx.push({ type: "text", x: p.x, y: p.y - 44, t: 0.9, text: "-" + n + " heart" + (n > 1 ? "s" : ""), bad: true });
+  }
+
+  // ---- Training: hit enough pop-up targets to gain a skill level ----
+  FU.Drill = {
+    // Harder each skill level: targets vanish faster.
+    create(level) {
+      const D = FU.CONFIG.DRILL;
+      const life = Math.max(0.6, D.life - D.lifeStep * (level || 0));
+      return { targets: [], spawned: 0, hits: 0, next: 0.8, life, total: D.targets, need: D.need, done: false, passed: false, events: [], fx: [] };
+    },
+
+    update(d, dt, rng) {
+      if (d.done) return;
+      const D = FU.CONFIG.DRILL;
+      d.next -= dt;
+      if (d.next <= 0 && d.spawned < d.total) {
+        d.targets.push({ x: rng.int(80, W - 80), y: rng.int(80, H - 80), t: d.life, life: d.life });
+        d.spawned += 1;
+        d.next = D.gap + rng.next() * 0.3;
+      }
+      for (const t of d.targets) t.t -= dt;
+      for (const t of d.targets) if (t.t <= 0) d.fx.push({ type: "text", x: t.x, y: t.y, t: 0.6, text: "Miss", bad: true });
+      d.targets = d.targets.filter((t) => t.t > 0);
+      for (const f of d.fx) f.t -= dt;
+      d.fx = d.fx.filter((f) => f.t > 0);
+      if (d.spawned >= d.total && d.targets.length === 0) {
+        d.done = true;
+        d.passed = d.hits >= d.need;
+      }
+    },
+
+    click(d, x, y) {
+      if (d.done) return;
+      const D = FU.CONFIG.DRILL;
+      d.events.push("revolver");
+      for (const t of d.targets) {
+        // Targets shrink as they fade, so quick shots are easier.
+        if (Math.hypot(t.x - x, t.y - y) <= D.radius * (0.4 + 0.6 * (t.t / t.life))) {
+          t.t = 0;
+          d.hits += 1;
+          d.events.push("hit");
+          d.fx.push({ type: "text", x: t.x, y: t.y, t: 0.6, text: "Hit!" });
+          d.targets = d.targets.filter((o) => o !== t);
+          return;
+        }
+      }
+    },
+  };
+})(typeof window !== "undefined" ? window : globalThis);
