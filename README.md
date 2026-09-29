@@ -53,7 +53,7 @@ For itch.io, build the zip from the repo folder and upload it as an HTML game
   your spread (the crosshair grows), and accuracy under 50% trims up to 10% off the
   bounty, so aimed shots beat spamming. Skill: aiming, dodging, using rocks.
   Luck: enemy mix, spawns, rocks, bullet spread, rewards.
-- **Trade ability (required).** You start with 26 hours, which is not enough to win by
+- **Trade ability (required).** You start with 28 hours, which is not enough to win by
   fighting alone. Hold E to buy time with gold, hold Q to work for gold. Prices rise
   as the river freezes: time costs 2 gold an hour at the start and 5 at the end;
   work pays 1 gold an hour at the start and 2 at the end. Trading back always loses.
