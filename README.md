@@ -22,7 +22,11 @@ the top level) and upload it as an HTML game.
   ice) and Jumpers' Fort (ends with a boss). Each has three tiers: beat one to unlock
   a harder, better-paid one. The popup shows the exact enemies and a tip.
 - **Bounty clock.** Each tier pays its full bounty if you win within a par time,
-  then the bounty drops, down to half. Time is money inside fights too.
+  then the bounty drops to its floor: half the bounty, but never under 15 gold.
+  Time is money inside fights too.
+- **Low-time warnings.** At 8 and 3 hours left, the clock stops and a popup shows
+  the walk to the dock, the gold still needed and today's price of time, with
+  quick buttons to buy 2, 5 or 10 hours.
 - **No running away.** A started fight can't be left. If you lose, you lose half
   that tier's bounty. Half of that is gone for good; the other half stays at the place
   and comes back when you win there (so losing on purpose to park gold never pays).
@@ -80,6 +84,7 @@ All balance numbers are in `src/config.js`.
 - `?play=1` skips the title and tutorial.
 - `?play=1&demo=place` opens a place popup.
 - `?play=1&demo=fight&place=cave&warp=3` starts a fight and skips 3 seconds.
+- `?play=1&demo=warn` shows the low-time warning.
 - `?play=1&demo=drill` starts training. `?play=1&demo=range` opens a Shooting Range.
 
 ## Credits

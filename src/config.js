@@ -47,6 +47,9 @@
     BUY_RATE: [2, 5], // E: gold paid per hour bought, start -> end
     CONVERT_SPEED: 4, // hours converted per real second while the key is held
 
+    // Low-time warnings: the clock stops and a popup offers to buy time.
+    LOW_TIME_WARNINGS: [8, 3], // hours left
+
     START_HEARTS: 5,
     MAX_HEARTS: 9,
     INVULNERABLE: 1.0, // seconds after being hit
@@ -130,8 +133,10 @@
   // After tier III, a place offers endless patrols: tier I enemies for a small bounty.
   FU.PATROL_REWARD = 5;
 
-  // Bounty clock: full reward until par, then it drops to BOUNTY_FLOOR at 3x par.
+  // Bounty clock: full reward until par, then it drops to its floor at 3x par.
+  // Floor: half the reward, but never under BOUNTY_MIN gold (or the reward, if smaller).
   FU.BOUNTY_FLOOR = 0.5;
+  FU.BOUNTY_MIN = 15;
 
   FU.TOWNS = {
     cabin: { name: "Your Cabin", icon: "wood-cabin" },

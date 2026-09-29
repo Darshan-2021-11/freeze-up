@@ -104,8 +104,9 @@
     // Reward if the fight ended now: full until par, then down to the floor at 3x par.
     bounty(a) {
       const t = a.tierDef;
-      const k = Math.max(FU.BOUNTY_FLOOR, 1 - (1 - FU.BOUNTY_FLOOR) * Math.max(0, a.time - t.par) / (2 * t.par));
-      return Math.round(t.reward * k);
+      const floor = FU.bountyFloor(t.reward);
+      const k = Math.min(1, Math.max(0, a.time - t.par) / (2 * t.par));
+      return Math.round(t.reward - (t.reward - floor) * k);
     },
 
     canUse(a, s, id) {

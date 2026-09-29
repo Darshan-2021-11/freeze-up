@@ -130,7 +130,43 @@
     setMode("world");
   }
 
+  // ---- Low-time warning: the clock stops while the player decides ----
+  function checkLowTime() {
+    s.warned = s.warned || {};
+    for (const h of C.LOW_TIME_WARNINGS) {
+      if (s.hours < h && !s.warned[h]) {
+        s.warned[h] = true;
+        keys.clear();
+        mode = "warn";
+        showWarning();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function showWarning() {
+    const dock = s.world.towns.find((t) => t.kind === "dock");
+    FU.UI.showTimeWarning(s, FU.hoursToWalk(s, dock.x, dock.y));
+    play("tick", 0.6);
+  }
+
+  function warnBuy(hours) {
+    if (mode !== "warn") return;
+    const before = s.gold;
+    FU.buyTime(s, hours / C.CONVERT_SPEED);
+    play(s.gold < before ? "coins" : "error", 0.5);
+    showWarning();
+  }
+
+  function warnClose() {
+    if (mode !== "warn") return;
+    FU.UI.hidePopup();
+    setMode("world");
+  }
+
   function updateWorld(dt) {
+    if (checkLowTime()) return;
     let dx = 0;
     let dy = 0;
     if (keys.has("a") || keys.has("arrowleft")) dx -= 1;
@@ -281,7 +317,7 @@
   }
 
   function help() {
-    if (["world", "place", "store", "range", "message"].indexOf(mode) < 0) return;
+    if (["world", "place", "store", "range", "message", "warn"].indexOf(mode) < 0) return;
     resumeMode = mode;
     mode = "tutorial";
     FU.UI.openTutorial(() => setMode(resumeMode));
@@ -304,6 +340,8 @@
     },
     startFight,
     startDrill,
+    warnBuy,
+    warnClose,
     closePopup,
     messageOk,
     buy: (id) => {
@@ -371,6 +409,10 @@
     if (mode === "range") {
       if (k === " " || k === "enter") return startDrill();
       if (k === "escape") return closePopup();
+      return;
+    }
+    if (mode === "warn") {
+      if (k === "escape" || k === " " || k === "enter") warnClose();
       return;
     }
     if (mode === "message") {
@@ -452,6 +494,10 @@
       place = s.world.places[0];
       mode = "place";
       FU.UI.showPlace(s, place);
+    }
+    if (demo === "warn") {
+      s.hours = 7.5;
+      s.gold = 80;
     }
     if (demo === "range") {
       mode = "range";

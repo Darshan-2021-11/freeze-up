@@ -54,6 +54,11 @@
     return Math.min(1, s.clock / FU.CONFIG.FREEZE_HOUR);
   };
 
+  // Rough hours to walk from the player to a point (straight line plus detours).
+  FU.hoursToWalk = function (s, x, y) {
+    return ((Math.hypot(x - s.player.x, y - s.player.y) * 1.3) / FU.walkSpeed(s)) * FU.CONFIG.CLOCK_RATE;
+  };
+
   // Hours that can still be bought before the final freeze.
   FU.buyableHours = function (s) {
     return Math.max(0, FU.CONFIG.FREEZE_HOUR - s.clock - s.hours);
@@ -121,6 +126,10 @@
   };
 
   // ---- Places ----
+
+  FU.bountyFloor = function (reward) {
+    return Math.max(Math.round(reward * FU.BOUNTY_FLOOR), Math.min(reward, FU.BOUNTY_MIN));
+  };
 
   FU.placeDone = function (place) {
     return place.tier >= FU.PLACES[place.kind].tiers.length;

@@ -237,7 +237,7 @@
           .join(", ");
       };
       const foes = waves.map((w, i) => (waves.length > 1 ? "Wave " + (i + 1) + ": " : "") + count(w)).join(". ");
-      const floor = Math.round(tier.reward * FU.BOUNTY_FLOOR);
+      const floor = FU.bountyFloor(tier.reward);
       let html = "<div class='foe'>" + ico(def.icon) + "<div><h3>" + def.name + " · " + FU.tierLabel(place) + "</h3>";
       if (tier.patrol) html += "<p>Conquered. Patrols clear out newcomers for a small bounty, as often as you like.</p>";
       html += "<p>" + foes + ".</p>";
@@ -260,6 +260,30 @@
       this.popup(html);
       $("pl-go").onclick = () => this.h.startFight();
       $("pl-no").onclick = () => this.h.closePopup();
+    },
+
+    // Shown when time runs low. The clock is stopped while it's open.
+    showTimeWarning(s, toDock) {
+      const C = FU.CONFIG;
+      const rate = FU.buyRate(s);
+      const canBuy = Math.min(FU.buyableHours(s), s.gold / rate);
+      const short = Math.max(0, C.TARGET_GOLD - s.gold);
+      let html = "<div class='foe'>" + ico("hourglass") + "<div><h3>Time is running out</h3>";
+      html += "<p><b>" + FU.fmtHours(s.hours) + " left.</b> The clock is stopped while you decide.</p>";
+      html += "<p>Walking to Dawson Dock from here takes about <b>" + FU.fmtHours(toDock) + "</b>.";
+      html += short ? " You still need <b>" + short + " more gold</b> for the ticket." : " You already have enough gold for the ticket: head to the dock!";
+      html += "</p><p>Time now costs <b>" + rate.toFixed(1) + " gold an hour</b> (it gets dearer as the river freezes). Your " + s.gold + " gold can buy up to <b>" + FU.fmtHours(canBuy) + "</b>.";
+      if (FU.buyableHours(s) < 1) html += " The river is about to freeze for good: no more time is for sale.";
+      html += "</p></div></div><div class='row'>";
+      for (const h of [2, 5, 10]) {
+        const cost = Math.ceil(h * rate);
+        const ok = cost <= s.gold && h <= FU.buyableHours(s);
+        html += "<button data-h='" + h + "'" + (ok ? "" : " disabled") + ">Buy " + h + "h (" + cost + " gold)</button>";
+      }
+      html += "<button class='primary' id='warn-ok'>Continue (Space)</button></div>";
+      const box = this.popup(html);
+      box.querySelectorAll("button[data-h]").forEach((b) => (b.onclick = () => this.h.warnBuy(Number(b.dataset.h))));
+      $("warn-ok").onclick = () => this.h.warnClose();
     },
 
     showStore(s, town) {
