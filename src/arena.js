@@ -402,6 +402,13 @@
       if (e.state === "crouch") {
         e.stateT -= dt;
         if (e.stateT <= 0) {
+          // Lunge at where the player is heading, not where they are.
+          const lead = (dist / def.lungeSpeed) * def.lead;
+          const tx = dx + (p.vx || 0) * lead;
+          const ty = dy + (p.vy || 0) * lead;
+          const tl = Math.hypot(tx, ty) || 1;
+          e.cx = tx / tl;
+          e.cy = ty / tl;
           e.state = "lunge";
           e.stateT = def.lungeTime;
           e.hit = false;
@@ -465,24 +472,47 @@
         }
       }
     } else if (e.kind === "bear") {
+      // Rage at half health: faster, charges more often. It roars as a warning.
+      if (!e.rage && e.hp <= e.maxHp * def.rageAt) {
+        e.rage = true;
+        a.events.push("hurt");
+        a.fx.push({ type: "text", x: e.x, y: e.y - 70, t: 1.2, text: "ROAR! It's angry!", bad: true });
+      }
+      const rage = e.rage ? def.rageSpeed : 1;
       if (e.state === "move") {
-        vx = ux * def.speed;
-        vy = uy * def.speed;
-        e.chargeT -= dt;
-        if (near && e.atkCd <= 0) {
-          // Close up, the bear raises a paw first: a swipe you can dodge.
-          e.state = "swipe";
-          e.stateT = def.swipeWindup;
+        vx = ux * def.speed * rage;
+        vy = uy * def.speed * rage;
+        e.chargeT -= dt * (e.rage ? def.rageCharge : 1);
+        if (dist < def.slamRange && e.atkCd <= 0) {
+          // Close up, the bear rears for a ground slam. A red circle shows where it lands.
+          e.state = "slam";
+          e.stateT = def.slamWindup;
         } else if (e.chargeT <= 0) {
           e.state = "windup";
-          e.stateT = def.windup;
+          e.stateT = def.windup / rage;
           e.cx = ux;
           e.cy = uy;
         }
-      } else if (e.state === "swipe") {
+      } else if (e.state === "windup" && e.rage) {
+        // An angry bear keeps turning to where you're heading until it charges.
+        e.stateT -= dt;
+        const lead = dist / (def.chargeSpeed * rage);
+        const tx = dx + (p.vx || 0) * lead;
+        const ty = dy + (p.vy || 0) * lead;
+        const tl = Math.hypot(tx, ty) || 1;
+        e.cx = tx / tl;
+        e.cy = ty / tl;
+        if (e.stateT <= 0) {
+          e.state = "charge";
+          e.stateT = def.chargeTime;
+          e.hit = false;
+        }
+      } else if (e.state === "slam") {
         e.stateT -= dt;
         if (e.stateT <= 0) {
-          if (dist < def.radius + 16 + def.reach + 15 && p.inv <= 0) hurtPlayer(a, def.touch, e);
+          a.events.push("dynamite");
+          a.fx.push({ type: "boom", x: e.x, y: e.y, t: 0.4, r: def.slamRadius });
+          if (Math.hypot(p.x - e.x, p.y - e.y) < def.slamRadius && p.inv <= 0) hurtPlayer(a, def.touch, e);
           e.atkCd = def.attackEvery;
           e.state = "move";
         }
@@ -494,8 +524,8 @@
           e.hit = false;
         }
       } else if (e.state === "charge") {
-        vx = e.cx * def.chargeSpeed;
-        vy = e.cy * def.chargeSpeed;
+        vx = e.cx * def.chargeSpeed * rage;
+        vy = e.cy * def.chargeSpeed * rage;
         e.stateT -= dt;
         if (e.stateT <= 0) {
           e.state = "move";

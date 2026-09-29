@@ -74,7 +74,7 @@
       name: "Wolf Den",
       icon: "direwolf",
       stars: 1,
-      tip: "Wolves crouch before they lunge. Dash sideways.",
+      tip: "Wolves crouch, then lunge at where you're heading. Change direction as they jump.",
       tiers: [
         { waves: [{ wolf: 3 }], reward: 12, par: 7 },
         { waves: [{ wolf: 6 }], reward: 18, par: 9 },
@@ -96,7 +96,7 @@
       name: "Bear Cave",
       icon: "mountain-cave",
       stars: 2,
-      tip: "Bears glow red before they charge. Make them crash into a rock.",
+      tip: "Bears glow before they charge (make them crash into a rock), slam the ground when you're close (leave the red circle), and rage at half health.",
       tiers: [
         { waves: [{ bear: 1 }], reward: 18, par: 10 },
         { waves: [{ bear: 1, wolf: 3 }], reward: 26, par: 13 },
@@ -187,6 +187,7 @@
       windup: 0.35,
       lungeSpeed: 520,
       lungeTime: 0.22,
+      lead: 0.8, // how well the lunge aims ahead of a moving player
       recover: 0.45,
       attackEvery: 1.2,
     },
@@ -227,17 +228,22 @@
       icon: "polar-bear",
       color: "#5a3b22",
       hp: 16,
-      speed: 85,
+      speed: 95,
       radius: 40,
       touch: 2,
       chargeEvery: [3, 4.5],
       windup: 0.6,
       chargeSpeed: 430,
       chargeTime: 0.7,
-      // Swipe when close: raise a paw (warning), then hit.
-      reach: 30,
-      swipeWindup: 0.5,
-      attackEvery: 1.6,
+      // Ground slam when close: a red circle warns, then everything inside is hit.
+      slamRange: 110, // starts a slam when the player is this close
+      slamRadius: 115,
+      slamWindup: 0.8,
+      attackEvery: 1.8,
+      // Rage below half health.
+      rageAt: 0.5,
+      rageSpeed: 1.2,
+      rageCharge: 1.6, // charges come this much sooner
     },
   };
 })(typeof window !== "undefined" ? window : globalThis);

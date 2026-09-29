@@ -272,11 +272,22 @@
     // Enemies
     for (const e of a.enemies.slice().sort((m, n) => m.y - n.y)) {
       const def = FU.ENEMIES[e.kind];
-      const shake = ["windup", "crouch", "swipe"].includes(e.state) ? Math.sin(a.time * 60) * 3 : 0;
+      const shake = ["windup", "crouch", "slam"].includes(e.state) ? Math.sin(a.time * 60) * 3 : 0;
       ctx.fillStyle = "rgba(0,0,0,0.15)";
       ctx.beginPath();
       ctx.ellipse(e.x, e.y + def.radius * 0.8, def.radius, 7, 0, 0, Math.PI * 2);
       ctx.fill();
+      if (e.state === "slam") {
+        // Red circle that fills in as the slam gets closer.
+        const k = 1 - e.stateT / def.slamWindup;
+        ctx.fillStyle = "rgba(155,44,44," + (0.1 + 0.25 * k) + ")";
+        ctx.strokeStyle = "rgba(155,44,44,0.8)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, def.slamRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
       if (e.state === "windup") {
         ctx.strokeStyle = "rgba(155,44,44,0.6)";
         ctx.lineWidth = def.radius * 1.6;
@@ -284,13 +295,13 @@
         line(ctx, e.x, e.y, e.x + e.cx * 330, e.y + e.cy * 330);
         ctx.globalAlpha = 1;
       }
-      A().draw(ctx, def.icon, e.flash > 0 ? "#ffffff" : def.color, e.x + shake, e.y, def.radius * 2.4, p.x < e.x);
+      A().draw(ctx, def.icon, e.flash > 0 ? "#ffffff" : e.rage ? "#8b1e1e" : def.color, e.x + shake, e.y, def.radius * 2.4, p.x < e.x);
       const bw = def.radius * 1.8;
       ctx.fillStyle = "rgba(0,0,0,0.35)";
       ctx.fillRect(e.x - bw / 2, e.y - def.radius - 16, bw, 5);
       ctx.fillStyle = "#c0392b";
       ctx.fillRect(e.x - bw / 2, e.y - def.radius - 16, (bw * Math.max(0, e.hp)) / e.maxHp, 5);
-      if (["aim", "crouch", "swipe"].includes(e.state)) label(ctx, "!", e.x, e.y - def.radius - 30, 22, "#9b2c2c", true);
+      if (["aim", "crouch", "slam"].includes(e.state)) label(ctx, "!", e.x, e.y - def.radius - 30, 22, "#9b2c2c", true);
       if (e.state === "stun") label(ctx, "Stunned", e.x, e.y - def.radius - 30, 14, INK, true);
     }
 

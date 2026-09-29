@@ -35,8 +35,12 @@ the top level) and upload it as an HTML game.
 - **Gold left on the map.** The HUD shows how much gold is still winnable (open
   bounties plus gold waiting to be won back) and warns when the ticket is out of reach by fighting
   alone.
-- **Fair hits.** Enemies warn before attacking ("!", crouch, raised paw, glow).
+- **Fair hits.** Enemies warn before attacking ("!", crouch, red circle, glow).
   Touching never hurts; hits knock you back and give 1 second of safety.
+- **Enemies.** Bandits keep their distance and aim ahead of you. Wolves crouch, then
+  lunge at where you're heading. Bears charge (make them hit a rock), slam the ground
+  when you're close (leave the red circle), and rage at half health: faster, charging
+  more often and aiming ahead.
 - **Training (optional).** The Shooting Range sells training for gold and 2 hours.
   Hit 8 of 12 targets to gain a skill level (max 5): more crit chance (double
   damage), faster shots and faster reloads. Each level costs more and the drill
@@ -58,8 +62,9 @@ the top level) and upload it as an HTML game.
 
 Chosen on the title screen. Easy: enemies 15% weaker and 10% slower, 1 extra hour.
 Hard: enemies 10% tougher and 5% faster, bandits shoot 10% more often.
-Bot results for whole runs (strong / weak aim): Easy 100% / 89%, Normal 71% / 11%,
-Hard 30% / 0%.
+Bot results for whole runs (strong aim): Easy 99%, Normal 53%, Hard 23%. The bot
+backs away from enemies in straight lines, which bears punish; players who circle
+do better. `node tools/fight-sim.js 100 8 75 dodge normal circle` tests circling.
 
 ## Map codes
 

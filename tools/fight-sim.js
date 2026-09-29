@@ -1,6 +1,6 @@
 // Fight check: a simple bot fights each place many times.
 // It keeps its distance, dashes when close and shoots the nearest enemy.
-// Usage: node tools/fight-sim.js [runs]
+// Usage: node tools/fight-sim.js [runs] [aimLag] [aimShake] [dodge|nododge] [easy|normal|hard] [circle]
 ["config", "rng", "world", "arena", "game"].forEach((f) => require("../src/" + f + ".js"));
 const FU = globalThis.FU;
 const runs = Number(process.argv[2]) || 200;
@@ -8,6 +8,7 @@ const LAG = Number(process.argv[3]) || 6; // frames of reaction delay (30 per se
 const SHAKE = Number(process.argv[4]) || 60; // aim wobble in pixels
 const DODGE = process.argv[5] !== "nododge";
 const DIFF = process.argv[6] || "normal";
+const CIRCLE = process.argv[7] === "circle"; // bot circles enemies instead of backing off
 const CLICK_GAP = 0.25;
 let lag = [];
 // A person clicks about 4 times a second, not every frame.
@@ -24,7 +25,15 @@ function bot(a) {
   const d = Math.hypot(e.x - p.x, e.y - p.y);
   let dx = 0;
   let dy = 0;
-  if (d < 220) {
+  if (CIRCLE) {
+    // Circle the nearest enemy while shooting (the "just keep moving" strategy).
+    dx = -(e.y - p.y);
+    dy = e.x - p.x;
+    if (d < 150) {
+      dx += p.x - e.x;
+      dy += p.y - e.y;
+    }
+  } else if (d < 220) {
     dx = p.x - e.x;
     dy = p.y - e.y;
   } else {
