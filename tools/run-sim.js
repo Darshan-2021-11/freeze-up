@@ -7,6 +7,8 @@ const FU = globalThis.FU;
 const C = FU.CONFIG;
 const runs = Number(process.argv[2]) || 200;
 Object.assign(C, JSON.parse(process.argv[3] || "{}"));
+const AIM_LAG = Number(process.argv[5]) || 8; // frames of reaction delay: higher = weaker player
+const AIM_SHAKE = Number(process.argv[6]) || 75; // aim wobble in pixels
 
 let lag = [];
 function fightBot(a) {
@@ -17,9 +19,9 @@ function fightBot(a) {
   const k = a.enemies.indexOf(e);
   lag[k] = lag[k] || [];
   lag[k].push({ x: e.x, y: e.y });
-  if (lag[k].length > 8) lag[k].shift();
+  if (lag[k].length > AIM_LAG) lag[k].shift();
   const o = lag[k][0];
-  const err = () => (Math.random() - 0.5) * 75;
+  const err = () => (Math.random() - 0.5) * AIM_SHAKE;
   const away = d < 220;
   return { dx: away ? p.x - e.x : 0, dy: away ? p.y - e.y : Math.sin(a.time * 1.3), aimX: o.x + err(), aimY: o.y + err(), fire: true, dash: d < 90 };
 }
@@ -59,6 +61,7 @@ let left = 0;
 let clears = 0;
 let losses = 0;
 let realSecs = 0;
+let deadEnds = 0; // everything conquered but still short of the ticket
 for (let i = 0; i < runs; i++) {
   const s = FU.newGame("run-" + i);
   const dock = s.world.towns[2];
@@ -75,6 +78,7 @@ for (let i = 0; i < runs; i++) {
     // Nearest ready place, worth the trip.
     const ready = s.world.places.filter((p) => !FU.placeDone(p));
     if (!ready.length || s.hours < toDock + 4) {
+      if (!ready.length) deadEnds++;
       // Out of options: work the spare time, then go to the dock.
       FU.work(s, Math.max(0, s.hours - toDock - 1) / C.CONVERT_SPEED);
       if (walk(s, dock.x, dock.y)) FU.board(s);
@@ -98,4 +102,5 @@ for (let i = 0; i < runs; i++) {
   }
 }
 console.log("win rate " + ((100 * won) / runs).toFixed(0) + "%, hours left on win " + (won ? (left / won).toFixed(1) : "-"));
+console.log("runs that conquered everything but lacked gold: " + deadEnds);
 console.log("per run: " + (clears / runs).toFixed(1) + " places cleared, " + (losses / runs).toFixed(1) + " fights lost, ~" + (realSecs / runs / 60).toFixed(1) + " real minutes");

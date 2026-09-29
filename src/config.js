@@ -5,7 +5,7 @@
   FU.CONFIG = {
     START_HOURS: 50,
     START_GOLD: 10,
-    TARGET_GOLD: 260,
+    TARGET_GOLD: 300,
 
     // The clock always runs: in the world, in shops, in fights and in training.
     CLOCK_RATE: 0.1, // game hours per real second (10 real seconds = 1 hour)
@@ -19,8 +19,9 @@
     BRIDGE_HALF: 55,
 
     // Losing a fight.
-    LOSE_SHARE: 0.25,
-    LOSE_MIN: 3,
+    // You drop this share of the tier's bounty. It stays at the place as a stash:
+    // win there later and you get it back.
+    LOSE_BOUNTY_SHARE: 0.5,
     MERCY: 0.1, // each loss at a place: enemies get 10% less health
 
     // Optional training at a Shooting Range. Pass the drill to gain a skill level.

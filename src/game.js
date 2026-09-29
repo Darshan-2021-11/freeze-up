@@ -116,26 +116,42 @@
   };
 
   // bounty: what the bounty clock showed when the fight ended. A small random bonus on top.
+  // Returns { reward, stash }: the bounty won and the dropped gold recovered.
   FU.winFight = function (s, place, bounty) {
     const reward = bounty + s.rng.int(0, 2);
+    const stash = place.stash;
     const tierName = FU.TIER_NAMES[place.tier];
-    s.gold += reward;
+    s.gold += reward + stash;
+    place.stash = 0;
     place.tier += 1;
     place.losses = 0;
     s.stats.wins += 1;
     s.stats.tiers += 1;
-    log(s, "You beat " + FU.PLACES[place.kind].name + " tier " + tierName + " and took " + reward + " gold.", "good");
-    return reward;
+    log(s, "You beat " + FU.PLACES[place.kind].name + " tier " + tierName + " and took " + reward + " gold" + (stash ? ", plus " + stash + " you dropped here" : "") + ".", "good");
+    return { reward, stash };
   };
 
   FU.loseFight = function (s, place) {
     const C = FU.CONFIG;
-    const lost = Math.min(s.gold, Math.max(C.LOSE_MIN, Math.ceil(s.gold * C.LOSE_SHARE)));
+    const tier = FU.nextTier(place);
+    const lost = Math.min(s.gold, Math.ceil(tier.reward * C.LOSE_BOUNTY_SHARE));
     s.gold -= lost;
+    place.stash += lost;
     place.losses = Math.min(3, place.losses + 1);
     s.stats.losses += 1;
-    log(s, "You lost at " + FU.PLACES[place.kind].name + " and dropped " + lost + " gold.", "bad");
+    log(s, "You lost at " + FU.PLACES[place.kind].name + " and dropped " + lost + " gold there.", "bad");
     return lost;
+  };
+
+  // Most gold still to be won on the map: full bounties of every open tier plus stashes.
+  FU.goldOnMap = function (s) {
+    let total = 0;
+    for (const p of s.world.places) {
+      total += p.stash;
+      const tiers = FU.PLACES[p.kind].tiers;
+      for (let i = p.tier; i < tiers.length; i++) total += tiers[i].reward;
+    }
+    return total;
   };
 
   // ---- Training (optional, at a Shooting Range) ----

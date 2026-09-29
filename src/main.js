@@ -215,17 +215,18 @@
       play(a.won ? "good" : "error", 0.6);
       message(a.won ? "Practice won" : "Practice lost", (a.won ? "Nice shooting." : "No harm done.") + " It took " + Math.round(a.time) + " seconds. No gold won or lost.", "Continue", "wood-cabin", null);
     } else if (a.won) {
-      const reward = FU.winFight(s, place, FU.Arena.bounty(a));
+      const got = FU.winFight(s, place, FU.Arena.bounty(a));
       play("coins", 0.7);
       const next = FU.nextTier(place);
       const after = next ? "Tier " + FU.TIER_NAMES[place.tier] + " is now open here: bounty " + next.reward + " gold." : a.def.name + " is conquered!";
-      message("You won in " + Math.round(a.time) + "s!", "You took <b>" + reward + " gold</b>. " + after, "Continue", "gold-nuggets", null);
+      const back = got.stash ? ", plus the <b>" + got.stash + " gold</b> you dropped here" : "";
+      message("You won in " + Math.round(a.time) + "s!", "You took <b>" + got.reward + " gold</b>" + back + ". " + after, "Continue", "gold-nuggets", null);
     } else {
       const lost = FU.loseFight(s, place);
       play("error", 0.6);
       message(
         "You lost",
-        "You dropped <b>" + lost + " gold</b>. " + a.def.name + " is a bit weaker now. Fight again right away, or walk away and come back stronger (a Shooting Range can train you).",
+        "You dropped <b>" + lost + " gold</b> here. Win at " + a.def.name + " later to get it back. The enemies are a bit weaker now. Fight again right away, or walk away and come back stronger (the Shooting Range can train you).",
         "Rematch now",
         "crossed-pistols",
         startFight,

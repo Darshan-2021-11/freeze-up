@@ -23,7 +23,7 @@
     {
       icons: ["crossed-pistols"],
       title: "No running away",
-      text: "Once a fight starts, you can't leave until it ends. If you lose, you drop a quarter of your gold. Then fight again right away, or walk away and come back later. Each loss makes that place a bit weaker.",
+      text: "Once a fight starts, you can't leave until it ends. If you lose, you drop gold at that place (half its bounty). Win there later and you get it all back, so a loss mostly costs time. Each loss also makes that place a bit weaker.",
     },
     {
       icons: ["bullseye"],
@@ -137,6 +137,12 @@
       const slow = Math.round((1 - FU.walkSpeed(s) / C.WALK_SPEED) * 100);
       $("hud-weight").textContent = slow > 0 ? "walking " + slow + "% slower" : "light bag";
       $("hud-goal").textContent = C.TARGET_GOLD + " gold";
+      // Warn early when the ticket is out of reach by fighting alone.
+      const onMap = FU.goldOnMap(s);
+      const short = s.gold + onMap < C.TARGET_GOLD;
+      const mapEl = $("hud-map");
+      mapEl.textContent = short ? "only " + onMap + " left to win: work (Q)!" : "up to " + onMap + " left on map";
+      mapEl.style.color = short ? "#ffb4a8" : "";
       const gear =
         ico("hearts") + " " + s.maxHearts + " " + ico("bullseye") + " Lv " + s.skill + " " + ico("shotgun-rounds") + " " + s.ammo.shells + " " + ico("dynamite") + " " + s.ammo.dynamite;
       if (gear !== this.gearHtml) {
@@ -235,7 +241,8 @@
       html += "<p><b>Bounty: " + tier.reward + " gold</b> if you win within " + tier.par + " seconds. After that it drops, down to " + floor + ". Time is money!</p>";
       html += "<p>Tip: " + def.tip + "</p>";
       if (place.losses) html += "<p>You lost here " + place.losses + " time" + (place.losses > 1 ? "s" : "") + ". The enemies are weaker now.</p>";
-      html += "<p><b>Once you start, there's no running away. Lose, and you drop a quarter of your gold.</b></p></div></div>";
+      if (place.stash) html += "<p><b>" + place.stash + " gold</b> you dropped is still here. Win to get it back.</p>";
+      html += "<p><b>Once you start, there's no running away. Lose, and you drop " + Math.ceil(tier.reward * FU.CONFIG.LOSE_BOUNTY_SHARE) + " gold here (win later to get it back).</b></p></div></div>";
       html += "<div class='row'><button class='primary' id='pl-go'>Fight (Space)</button><button id='pl-no'>Not now (Esc)</button></div>";
       this.popup(html);
       $("pl-go").onclick = () => this.h.startFight();
