@@ -132,14 +132,37 @@ in Dawson for the winter.
 
 ## 5. Team contributions
 
-> Fill in before submitting.
+Solo entry: **Darshan** (the only team member).
 
-| Member | Worked on |
-|---|---|
-| _Name_ | _e.g. game design, balancing, playtesting_ |
-| _Name_ | _e.g. programming_ |
-| _Name_ | _e.g. art direction, sound selection_ |
-| _Name_ | _e.g. itch.io page, report_ |
+**Game direction and design**
+- Chose the core idea: a strict time-versus-gold tradeoff with luck and skill, and a
+  "you must convert one into the other" rule.
+- Rejected the first node-map prototype as not fun, and asked for an open 2D world you
+  can explore freely, with fights at each location and every action costing time.
+- Decided the key rules: fights can't be skipped; losses cost gold; training is
+  optional and improves your skills; unique locations instead of duplicate buildings;
+  trading time and gold must be necessary to win; and a single last-hour warning so
+  players have to watch the clock themselves.
+
+**Playtesting and balancing**
+- Played the game repeatedly and found the problems that shaped the final version:
+  - Contact damage that felt buggy, and a "Walk away" button that didn't work.
+  - Unbalanced maps and random enemy counts.
+  - A run where every place was conquered but the ticket was out of reach.
+  - Parking gold by losing on purpose.
+  - Easy shot-spamming, and bears and wolves that weren't threatening.
+  - Warnings that never appeared, and a game that froze when time ran out mid-fight.
+- Directed each fix, for example: half of lost gold is gone for good so the recovery
+  rule can't be exploited, a 15-gold minimum bounty, endless patrols, bloom plus
+  one-shot-per-click instead of paying gold per bullet, difficulty levels, wolves that
+  lead their lunges, and a bear ground slam and rage.
+
+**Production**
+- Directed and reviewed all implementation, which was done with an AI coding assistant
+  (Claude Code; see section 6). This included the code, the balance simulators, asset
+  sourcing from credited free libraries, and drafts of the documentation.
+- Approved the final scope, prepared the itch.io page and this report, and submitted
+  the game.
 
 ## 6. Resources and references
 
