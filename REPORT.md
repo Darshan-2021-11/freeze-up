@@ -132,37 +132,42 @@ in Dawson for the winter.
 
 ## 5. Team contributions
 
-Solo entry: **Darshan** (the only team member).
+Solo entry: **Darshan** (the only team member): game designer, system designer,
+playtester and producer.
 
-**Game direction and design**
-- Chose the core idea: a strict time-versus-gold tradeoff with luck and skill, and a
-  "you must convert one into the other" rule.
-- Rejected the first node-map prototype as not fun, and asked for an open 2D world you
-  can explore freely, with fights at each location and every action costing time.
-- Decided the key rules: fights can't be skipped; losses cost gold; training is
-  optional and improves your skills; unique locations instead of duplicate buildings;
-  trading time and gold must be necessary to win; and a single last-hour warning so
-  players have to watch the clock themselves.
+**System architecture: how the game works as a whole**
+Designed the structure of the game's systems and how they connect:
+- **The core economy:** time and gold as two currencies that convert into each other,
+  with asymmetric trade rates, and the rule that winning is impossible without
+  converting one into the other.
+- **The world structure:** an open 2D world instead of a one-way node map, with unique
+  locations that each hold their own fights, and every action (walking, fighting,
+  shopping, training) running on the same clock.
+- **The fight loop and its consequences:** fights can't be skipped; losing costs gold,
+  and half of it can be recovered at that place (designed specifically so it can't be
+  exploited to park gold); tiers replace respawn timers; patrols make sure the map never
+  runs dry.
+- **The progression:** optional training that trades time and gold now for faster
+  fights later, difficulty levels, and a minimum bounty so fights always pay something.
+- **The pressure design:** a single last-hour warning that stops the clock, so players
+  have to watch the timer themselves.
+- **The combat feel:** telegraphed enemy attacks, one shot per click with spread that
+  widens when spamming, and specific behaviors for each enemy (wolves leading their
+  lunges, bears slamming the ground and raging).
 
-**Playtesting and balancing**
-- Played the game repeatedly and found the problems that shaped the final version:
-  - Contact damage that felt buggy, and a "Walk away" button that didn't work.
-  - Unbalanced maps and random enemy counts.
-  - A run where every place was conquered but the ticket was out of reach.
-  - Parking gold by losing on purpose.
-  - Easy shot-spamming, and bears and wolves that weren't threatening.
-  - Warnings that never appeared, and a game that froze when time ran out mid-fight.
-- Directed each fix, for example: half of lost gold is gone for good so the recovery
-  rule can't be exploited, a 15-gold minimum bounty, endless patrols, bloom plus
-  one-shot-per-click instead of paying gold per bullet, difficulty levels, wolves that
-  lead their lunges, and a bear ground slam and rage.
+**Playtesting and iteration**
+- Played every build and found the issues that drove each revision: buggy contact
+  damage, a broken "Walk away" button, unbalanced maps, a gold dead end, a
+  gold-parking exploit, shot-spamming, enemies that weren't threatening, missing
+  warnings, and a freeze when time ran out mid-fight.
+- Decided how each one was fixed, and rejected options that didn't fit the vision,
+  such as charging gold per bullet or keeping repeated buildings.
 
 **Production**
-- Directed and reviewed all implementation, which was done with an AI coding assistant
-  (Claude Code; see section 6). This included the code, the balance simulators, asset
-  sourcing from credited free libraries, and drafts of the documentation.
-- Approved the final scope, prepared the itch.io page and this report, and submitted
-  the game.
+- Implementation was done with an AI coding assistant (Claude Code; see section 6),
+  following this design. Every change was specified, reviewed and playtested.
+- Chose the final scope, prepared the itch.io page and this report, and submitted the
+  game.
 
 ## 6. Resources and references
 
