@@ -281,7 +281,7 @@
       const rate = FU.buyRate(s);
       const canBuy = Math.min(FU.buyableHours(s), s.gold / rate);
       const short = Math.max(0, C.TARGET_GOLD - s.gold);
-      let html = "<div class='foe'>" + ico("hourglass") + "<div><h3>Time is running out</h3>";
+      let html = "<div class='foe'>" + ico("hourglass") + "<div><h3>Last hour!</h3>";
       html += "<p><b>" + FU.fmtHours(s.hours) + " left.</b> The clock is stopped while you decide.</p>";
       html += "<p>Walking to Dawson Dock from here takes about <b>" + FU.fmtHours(toDock) + "</b>.";
       html += short ? " You still need <b>" + short + " more gold</b> for the ticket." : " You already have enough gold for the ticket: head to the dock!";
