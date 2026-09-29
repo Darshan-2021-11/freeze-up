@@ -24,7 +24,7 @@ the top level) and upload it as an HTML game.
 - **Bounty clock.** Each tier pays its full bounty if you win within a par time,
   then the bounty drops to its floor: half the bounty, but never under 15 gold.
   Time is money inside fights too.
-- **Low-time warnings.** At 8 and 3 hours left (on the map, in shops, fights or
+- **Low-time warnings.** At 8, 3 and 1 hours left (on the map, in shops, fights or
   training), the clock stops and a popup shows
   the walk to the dock, the gold still needed and today's price of time, with
   quick buttons to buy 2, 5 or 10 hours.

@@ -48,7 +48,7 @@
     CONVERT_SPEED: 4, // hours converted per real second while the key is held
 
     // Low-time warnings: the clock stops and a popup offers to buy time.
-    LOW_TIME_WARNINGS: [8, 3], // hours left
+    LOW_TIME_WARNINGS: [8, 3, 1], // hours left
 
     // Aim. One shot per click; quick clicking widens the spread (bloom),
     // which settles when you pause. Wild shooting trims the bounty a little.

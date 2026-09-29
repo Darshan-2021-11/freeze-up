@@ -139,6 +139,8 @@
   function checkLowTime() {
     if (s.status !== "playing") return false;
     s.warned = s.warned || {};
+    // Buying time back above a mark re-arms its warning.
+    for (const h of C.LOW_TIME_WARNINGS) if (s.hours >= h + 1) s.warned[h] = false;
     for (const h of C.LOW_TIME_WARNINGS) {
       if (s.hours < h && !s.warned[h]) {
         s.warned[h] = true;
@@ -464,6 +466,7 @@
       FU.spend(s, dt * C.CLOCK_RATE);
       checkLowTime();
     }
+    checkEnd(); // time may have just run out, even mid-fight
     if (CLOCK_MODES.includes(mode) && s.status === "playing") {
       if (mode === "world") updateWorld(dt);
       else if (mode === "fight") updateFight(dt);
