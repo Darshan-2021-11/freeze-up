@@ -24,7 +24,8 @@ the top level) and upload it as an HTML game.
 - **Bounty clock.** Each tier pays its full bounty if you win within a par time,
   then the bounty drops to its floor: half the bounty, but never under 15 gold.
   Time is money inside fights too.
-- **Low-time warnings.** At 8 and 3 hours left, the clock stops and a popup shows
+- **Low-time warnings.** At 8 and 3 hours left (on the map, in shops, fights or
+  training), the clock stops and a popup shows
   the walk to the dock, the gold still needed and today's price of time, with
   quick buttons to buy 2, 5 or 10 hours.
 - **No running away.** A started fight can't be left. If you lose, you lose half
@@ -98,7 +99,7 @@ All balance numbers are in `src/config.js`.
 - `?play=1` skips the title and tutorial.
 - `?play=1&demo=place` opens a place popup.
 - `?play=1&demo=fight&place=cave&warp=3` starts a fight and skips 3 seconds.
-- `?play=1&demo=warn` shows the low-time warning.
+- `?play=1&demo=warn` shows the low-time warning. Add `&hours=7.5` to any dev link to set the time left.
 - `?play=1&demo=drill` starts training. `?play=1&demo=range` opens a Shooting Range.
 
 ## Credits

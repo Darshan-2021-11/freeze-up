@@ -296,7 +296,7 @@
       html += "<button class='primary' id='warn-ok'>Continue (Space)</button></div>";
       const box = this.popup(html);
       box.querySelectorAll("button[data-h]").forEach((b) => (b.onclick = () => this.h.warnBuy(Number(b.dataset.h))));
-      $("warn-ok").onclick = () => this.h.warnClose();
+      $("warn-ok").onclick = () => this.h.warnClose(false);
     },
 
     showStore(s, town) {

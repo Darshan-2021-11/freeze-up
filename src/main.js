@@ -18,6 +18,8 @@
   let place = null; // the place being fought
   let town = null; // the shop that is open
   let onMessage = null;
+  let warnFrom = "world"; // where to return after the low-time warning
+  let warnShownAt = 0;
   let onSecond = null; // second button's action, if any
   let hasSecond = false;
   let helpLeft = 0;
@@ -132,12 +134,19 @@
   }
 
   // ---- Low-time warning: the clock stops while the player decides ----
+  // Runs in every mode where the clock ticks: map, shops, fights and training.
+  // A fight or drill waits behind the popup and resumes afterwards.
   function checkLowTime() {
+    if (s.status !== "playing") return false;
     s.warned = s.warned || {};
     for (const h of C.LOW_TIME_WARNINGS) {
       if (s.hours < h && !s.warned[h]) {
         s.warned[h] = true;
+        warnFrom = mode === "fight" || mode === "drill" ? mode : "world";
+        warnShownAt = performance.now();
         keys.clear();
+        mouseDown = false;
+        FU.UI.setPrompt(null);
         mode = "warn";
         showWarning();
         return true;
@@ -160,14 +169,15 @@
     showWarning();
   }
 
-  function warnClose() {
+  function warnClose(fromKey) {
     if (mode !== "warn") return;
+    // Ignore Space/Enter for a moment so a quick key press can't skip the warning.
+    if (fromKey && performance.now() - warnShownAt < 1000) return;
     FU.UI.hidePopup();
-    setMode("world");
+    setMode(warnFrom);
   }
 
   function updateWorld(dt) {
-    if (checkLowTime()) return;
     let dx = 0;
     let dy = 0;
     if (keys.has("a") || keys.has("arrowleft")) dx -= 1;
@@ -415,7 +425,7 @@
       return;
     }
     if (mode === "warn") {
-      if (k === "escape" || k === " " || k === "enter") warnClose();
+      if (k === "escape" || k === " " || k === "enter") warnClose(true);
       return;
     }
     if (mode === "message") {
@@ -452,6 +462,9 @@
 
     if (CLOCK_MODES.includes(mode) && s.status === "playing") {
       FU.spend(s, dt * C.CLOCK_RATE);
+      checkLowTime();
+    }
+    if (CLOCK_MODES.includes(mode) && s.status === "playing") {
       if (mode === "world") updateWorld(dt);
       else if (mode === "fight") updateFight(dt);
       else if (mode === "drill") updateDrill(dt);
@@ -465,9 +478,10 @@
     clicked = false;
 
     FU.UI.updateHud(s, working, buying);
-    if (mode === "fight" && arena) {
+    const view = mode === "warn" ? warnFrom : mode; // keep showing the fight behind the warning
+    if (view === "fight" && arena) {
       renderer.drawFight(s, arena, mouse, helpLeft > 0);
-    } else if (mode === "drill" && drill) {
+    } else if (view === "drill" && drill) {
       renderer.drawDrill(s, drill, mouse);
     } else if (mode !== "paused" && mode !== "title" && mode !== "tutorial") {
       FU.UI.refreshPanel(s, "Freeze-Up", "WASD: walk · Space: enter a place or shop · Q: work (time → gold) · E: buy time (gold → time) · P: pause");
@@ -481,6 +495,7 @@
     // Dev shortcuts: skip the title, or jump into a fight or training.
     storage("freezeup2-tutorial", "1");
     startGame(s.code);
+    if (params.has("hours")) s.hours = Number(params.get("hours"));
     const demo = params.get("demo");
     if (demo === "fight" || demo === "drill") {
       place = s.world.places.find((p) => p.kind === (params.get("place") || "fort")) || s.world.places[0];
