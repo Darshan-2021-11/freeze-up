@@ -1,14 +1,3 @@
-# itch.io page — copy and paste
-
-## Upload settings
-- **Kind of project:** HTML
-- **Upload:** `dist/freeze-up.zip`, and tick "This file will be played in the browser"
-- **Embed options:** viewport 1280 × 800, tick "Fullscreen button"; leave "Mobile friendly" off (needs keyboard and mouse)
-- **Genre:** Action · **Tags:** time-management, top-down-shooter, open-world, economy, western
-- **Submit to:** Glitch MILAN Game Jam '26
-
----
-
 ## Title
 Freeze-Up
 
