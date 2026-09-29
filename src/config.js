@@ -92,7 +92,7 @@
       icon: "snowflake-2",
       stars: 2,
       ice: true,
-      tip: "The ice is slippery: you keep sliding. Start moving early.",
+      tip: "The ice is slippery: you keep sliding. Dynamite breaks the ice: lure wolves into the holes, and don't step in yourself.",
       tiers: [
         { waves: [{ wolf: 4 }], reward: 16, par: 8 },
         { waves: [{ wolf: 4, bandit: 2 }], reward: 24, par: 12 },

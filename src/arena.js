@@ -80,6 +80,7 @@
         shots: [],
         foeShots: [],
         bombs: [],
+        holes: [], // Frozen Lake: dynamite breaks the ice
         rocks,
         fx: [],
         events: [],
@@ -251,6 +252,27 @@
           if (Math.hypot(e.x - b.x, e.y - b.y) <= w.radius + FU.ENEMIES[e.kind].radius) hurtEnemy(a, e, w.dmg, e.x - b.x, e.y - b.y);
         }
         if (Math.hypot(p.x - b.x, p.y - b.y) <= w.radius && p.inv <= 0) hurtPlayer(a, 1, b);
+        if (a.ice) a.holes.push({ x: b.x, y: b.y, r: 55 });
+      }
+      // Anything that walks onto open water falls in. Enemies drown; you get hurt and climb out.
+      for (const h of a.holes) {
+        for (const e of a.enemies) {
+          if (e.hp > 0 && Math.hypot(e.x - h.x, e.y - h.y) < h.r) {
+            e.hp = 0;
+            a.events.push("hit");
+            a.fx.push({ type: "text", x: e.x, y: e.y - 40, t: 0.9, text: "Fell through!" });
+          }
+        }
+        const d = Math.hypot(p.x - h.x, p.y - h.y);
+        if (d < h.r - 6) {
+          if (p.inv <= 0) hurtPlayer(a, 1, h);
+          const k = d || 1;
+          p.x = h.x + ((p.x - h.x) / k) * (h.r + 10);
+          p.y = h.y + ((p.y - h.y) / k) * (h.r + 10);
+          p.mvx = 0;
+          p.mvy = 0;
+          clampField(p, 16);
+        }
       }
       a.bombs = a.bombs.filter((b) => b.t > 0);
       a.enemies = a.enemies.filter((e) => e.hp > 0);

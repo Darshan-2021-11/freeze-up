@@ -250,6 +250,8 @@
     this.beginField(s, a.ice);
     const p = a.player;
 
+    for (const h of a.holes) disc(ctx, h.x, h.y, h.r, "#1f4e79", "#eef4f8");
+
     for (const k of a.rocks) {
       disc(ctx, k.x, k.y, k.r, "#8d8578", "#5d574e");
       A().draw(ctx, "stone-pile", "#6c655b", k.x, k.y, k.r * 1.6);
