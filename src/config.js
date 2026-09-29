@@ -122,6 +122,8 @@
   };
   FU.PLACE_ORDER = ["den", "camp", "cave", "lake", "fort"];
   FU.TIER_NAMES = ["I", "II", "III"];
+  // After tier III, a place offers endless patrols: tier I enemies for a small bounty.
+  FU.PATROL_REWARD = 5;
 
   // Bounty clock: full reward until par, then it drops to BOUNTY_FLOOR at 3x par.
   FU.BOUNTY_FLOOR = 0.5;

@@ -68,9 +68,10 @@
     return { W, H, river, bridges, towns, places, trees, riverX };
   };
 
-  // The exact enemies of one tier, as a list of kinds per wave.
+  // The exact enemies of one tier, as a list of kinds per wave. Patrols reuse tier I.
   FU.tierWaves = function (kind, tier) {
-    return FU.PLACES[kind].tiers[tier].waves.map(function (w) {
+    const tiers = FU.PLACES[kind].tiers;
+    return tiers[tier < tiers.length ? tier : 0].waves.map(function (w) {
       const list = [];
       for (const [k, n] of Object.entries(w)) for (let i = 0; i < n; i++) list.push(k);
       return list;

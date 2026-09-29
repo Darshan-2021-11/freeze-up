@@ -91,11 +91,12 @@
       if (!visible(p.x, p.y, 120)) continue;
       const def = FU.PLACES[p.kind];
       const tier = FU.nextTier(p);
-      disc(ctx, p.x, p.y, 34, tier ? STAR_COLORS[def.stars] : "#9a917e", INK);
+      const done = FU.placeDone(p);
+      disc(ctx, p.x, p.y, 34, done ? "#9a917e" : STAR_COLORS[def.stars], INK);
       A().draw(ctx, def.icon, "#fff", p.x, p.y, 44);
       label(ctx, def.name + " " + "★".repeat(def.stars), p.x, p.y + 48, 14, INK);
-      const sub = tier ? "Tier " + FU.TIER_NAMES[p.tier] + " · up to " + tier.reward + " gold" : "Conquered";
-      label(ctx, sub, p.x, p.y + 67, 12, tier ? INK : "#7a6f5c");
+      const sub = done ? "Conquered · patrol " + tier.reward + " gold" : "Tier " + FU.TIER_NAMES[p.tier] + " · up to " + tier.reward + " gold";
+      label(ctx, sub, p.x, p.y + 67, 12, done ? "#7a6f5c" : INK);
       if (p.stash) label(ctx, p.stash + " gold dropped here", p.x, p.y - 48, 12, "#9b2c2c");
       else if (p.losses) label(ctx, "Lost here " + p.losses + "x (weaker now)", p.x, p.y - 48, 11, "#9b2c2c");
     }
@@ -154,7 +155,7 @@
     ctx.fillStyle = "#8a6440";
     for (const b of wd.bridges) ctx.fillRect(x0 + b.x * k - 5, y0 + b.y * k - 2, 10, 4);
     for (const p of wd.places) {
-      ctx.fillStyle = FU.nextTier(p) ? STAR_COLORS[FU.PLACES[p.kind].stars] : "#9a917e";
+      ctx.fillStyle = FU.placeDone(p) ? "#9a917e" : STAR_COLORS[FU.PLACES[p.kind].stars];
       ctx.beginPath();
       ctx.arc(x0 + p.x * k, y0 + p.y * k, 4, 0, Math.PI * 2);
       ctx.fill();
@@ -331,7 +332,7 @@
 
     // Field HUD
     for (let i = 0; i < p.maxHp; i++) A().draw(ctx, "hearts", i < p.hp ? "#c0392b" : "rgba(59,47,34,0.25)", 24 + i * 30, 24, 26);
-    label(ctx, a.def.name + " " + FU.TIER_NAMES[a.place.tier] + " · wave " + Math.min(a.wave, a.waves.length) + " of " + a.waves.length + " · " + a.enemies.length + " left", FU.Arena.W / 2, 22, 15, INK);
+    label(ctx, a.def.name + " " + (a.tierDef.patrol ? "patrol" : FU.TIER_NAMES[a.place.tier]) + " · wave " + Math.min(a.wave, a.waves.length) + " of " + a.waves.length + " · " + a.enemies.length + " left", FU.Arena.W / 2, 22, 15, INK);
     const bounty = FU.Arena.bounty(a);
     const full = bounty >= a.tierDef.reward;
     if (a.tierDef.reward) label(ctx, "Bounty: " + bounty + " gold" + (full ? " (" + Math.max(0, Math.ceil(a.tierDef.par - a.time)) + "s at full)" : " and dropping"), FU.Arena.W / 2, 48, 15, full ? "#2f6b3a" : "#9b2c2c", true);

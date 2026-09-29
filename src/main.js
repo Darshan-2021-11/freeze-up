@@ -107,7 +107,6 @@
     if (!near) return;
     play("click", 0.4);
     if (near.type === "place") {
-      if (FU.placeDone(near.item)) return play("error", 0.4);
       place = near.item;
       mode = "place";
       FU.UI.showPlace(s, place);
@@ -168,9 +167,7 @@
     if (near && near.type === "place") {
       const def = FU.PLACES[near.item.kind];
       const tier = FU.nextTier(near.item);
-      prompt = tier
-        ? "Space: fight at " + def.name + " tier " + FU.TIER_NAMES[near.item.tier] + " (bounty " + tier.reward + " gold)"
-        : def.name + " is conquered. Nothing left here.";
+      prompt = "Space: " + def.name + " " + FU.tierLabel(near.item) + " (bounty " + tier.reward + " gold)";
     } else if (near) {
       const extra = { dock: " (shop and ticket " + C.TARGET_GOLD + " gold)", range: " (train your aim)", cabin: " (free practice)" }[near.item.kind] || " (shop)";
       prompt = "Space: enter " + FU.TOWNS[near.item.kind].name + extra;
@@ -218,7 +215,11 @@
       const got = FU.winFight(s, place, FU.Arena.bounty(a));
       play("coins", 0.7);
       const next = FU.nextTier(place);
-      const after = next ? "Tier " + FU.TIER_NAMES[place.tier] + " is now open here: bounty " + next.reward + " gold." : a.def.name + " is conquered!";
+      const after = a.tierDef.patrol
+        ? "Patrols here stay open."
+        : next.patrol
+          ? a.def.name + " is conquered! Patrols here pay " + next.reward + " gold each."
+          : "Tier " + FU.TIER_NAMES[place.tier] + " is now open here: bounty " + next.reward + " gold.";
       const back = got.stash ? ", plus the <b>" + got.stash + " gold</b> you dropped here" : "";
       message("You won in " + Math.round(a.time) + "s!", "You took <b>" + got.reward + " gold</b>" + back + ". " + after, "Continue", "gold-nuggets", null);
     } else {

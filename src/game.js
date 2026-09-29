@@ -110,9 +110,15 @@
     return place.tier >= FU.PLACES[place.kind].tiers.length;
   };
 
-  // The tier the player would fight next, or null once conquered.
+  // The fight the player would take next: the next tier, or a patrol once conquered.
   FU.nextTier = function (place) {
-    return FU.placeDone(place) ? null : FU.PLACES[place.kind].tiers[place.tier];
+    const tiers = FU.PLACES[place.kind].tiers;
+    if (!FU.placeDone(place)) return tiers[place.tier];
+    return { waves: tiers[0].waves, reward: FU.PATROL_REWARD, par: tiers[0].par, patrol: true };
+  };
+
+  FU.tierLabel = function (place) {
+    return FU.placeDone(place) ? "patrol" : "tier " + FU.TIER_NAMES[place.tier];
   };
 
   // bounty: what the bounty clock showed when the fight ended. A small random bonus on top.
@@ -120,14 +126,16 @@
   FU.winFight = function (s, place, bounty) {
     const reward = bounty + s.rng.int(0, 2);
     const stash = place.stash;
-    const tierName = FU.TIER_NAMES[place.tier];
+    const label = FU.tierLabel(place);
     s.gold += reward + stash;
     place.stash = 0;
-    place.tier += 1;
     place.losses = 0;
     s.stats.wins += 1;
-    s.stats.tiers += 1;
-    log(s, "You beat " + FU.PLACES[place.kind].name + " tier " + tierName + " and took " + reward + " gold" + (stash ? ", plus " + stash + " you dropped here" : "") + ".", "good");
+    if (!FU.placeDone(place)) {
+      place.tier += 1;
+      s.stats.tiers += 1;
+    }
+    log(s, "You beat " + FU.PLACES[place.kind].name + " " + label + " and took " + reward + " gold" + (stash ? ", plus " + stash + " you dropped here" : "") + ".", "good");
     return { reward, stash };
   };
 

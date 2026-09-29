@@ -46,7 +46,7 @@
       // Enemy groups, one per wave, fixed per place. Losses here weaken enemies;
       // from the second loss on, one fewer enemy too.
       let remove = Math.max(0, place.losses - 1);
-      const tierDef = def.tiers[place.tier];
+      const tierDef = FU.nextTier(place);
       const waves = FU.tierWaves(place.kind, place.tier);
       for (let i = waves.length - 1; i >= 0 && remove > 0; i--) {
         while (waves[i].length > 1 && remove > 0) {

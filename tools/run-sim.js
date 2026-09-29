@@ -61,7 +61,7 @@ let left = 0;
 let clears = 0;
 let losses = 0;
 let realSecs = 0;
-let deadEnds = 0; // everything conquered but still short of the ticket
+let deadEnds = 0; // everything conquered and out of time, still short of the ticket
 for (let i = 0; i < runs; i++) {
   const s = FU.newGame("run-" + i);
   const dock = s.world.towns[2];
@@ -76,9 +76,9 @@ for (let i = 0; i < runs; i++) {
       continue;
     }
     // Nearest ready place, worth the trip.
-    const ready = s.world.places.filter((p) => !FU.placeDone(p));
-    if (!ready.length || s.hours < toDock + 4) {
-      if (!ready.length) deadEnds++;
+    const ready = s.world.places; // conquered places still offer patrols
+    if (s.hours < toDock + 4) {
+      if (ready.every((p) => FU.placeDone(p))) deadEnds++;
       // Out of options: work the spare time, then go to the dock.
       FU.work(s, Math.max(0, s.hours - toDock - 1) / C.CONVERT_SPEED);
       if (walk(s, dock.x, dock.y)) FU.board(s);
@@ -102,5 +102,5 @@ for (let i = 0; i < runs; i++) {
   }
 }
 console.log("win rate " + ((100 * won) / runs).toFixed(0) + "%, hours left on win " + (won ? (left / won).toFixed(1) : "-"));
-console.log("runs that conquered everything but lacked gold: " + deadEnds);
+console.log("runs that conquered everything and still lost: " + deadEnds);
 console.log("per run: " + (clears / runs).toFixed(1) + " places cleared, " + (losses / runs).toFixed(1) + " fights lost, ~" + (realSecs / runs / 60).toFixed(1) + " real minutes");

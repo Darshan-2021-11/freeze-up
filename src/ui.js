@@ -141,7 +141,7 @@
       const onMap = FU.goldOnMap(s);
       const short = s.gold + onMap < C.TARGET_GOLD;
       const mapEl = $("hud-map");
-      mapEl.textContent = short ? "only " + onMap + " left to win: work (Q)!" : "up to " + onMap + " left on map";
+      mapEl.textContent = short ? "only " + onMap + " left in bounties: patrol or work (Q)!" : "up to " + onMap + " left on map";
       mapEl.style.color = short ? "#ffb4a8" : "";
       const gear =
         ico("hearts") + " " + s.maxHearts + " " + ico("bullseye") + " Lv " + s.skill + " " + ico("shotgun-rounds") + " " + s.ammo.shells + " " + ico("dynamite") + " " + s.ammo.dynamite;
@@ -236,7 +236,8 @@
       };
       const foes = waves.map((w, i) => (waves.length > 1 ? "Wave " + (i + 1) + ": " : "") + count(w)).join(". ");
       const floor = Math.round(tier.reward * FU.BOUNTY_FLOOR);
-      let html = "<div class='foe'>" + ico(def.icon) + "<div><h3>" + def.name + " · tier " + FU.TIER_NAMES[place.tier] + "</h3>";
+      let html = "<div class='foe'>" + ico(def.icon) + "<div><h3>" + def.name + " · " + FU.tierLabel(place) + "</h3>";
+      if (tier.patrol) html += "<p>Conquered. Patrols clear out newcomers for a small bounty, as often as you like.</p>";
       html += "<p>" + foes + ".</p>";
       html += "<p><b>Bounty: " + tier.reward + " gold</b> if you win within " + tier.par + " seconds. After that it drops, down to " + floor + ". Time is money!</p>";
       html += "<p>Tip: " + def.tip + "</p>";
