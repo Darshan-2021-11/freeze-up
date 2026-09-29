@@ -102,6 +102,10 @@ All balance numbers are in `src/config.js`.
 - `?play=1&demo=warn` shows the low-time warning. Add `&hours=7.5` to any dev link to set the time left.
 - `?play=1&demo=drill` starts training. `?play=1&demo=range` opens a Shooting Range.
 
+## Report
+
+See `REPORT.md` for the jam report (concept, theme, design decisions, cut ideas, team, resources).
+
 ## Credits
 
 See `CREDITS.md`.
