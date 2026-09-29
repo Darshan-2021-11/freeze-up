@@ -46,7 +46,8 @@
       // Enemy groups, one per wave, fixed per place. Losses here weaken enemies;
       // from the second loss on, one fewer enemy too.
       let remove = Math.max(0, place.losses - 1);
-      const waves = (place.waves || FU.rollWaves(rng, place.kind)).map((w) => w.slice());
+      const tierDef = def.tiers[place.tier];
+      const waves = FU.tierWaves(place.kind, place.tier);
       for (let i = waves.length - 1; i >= 0 && remove > 0; i--) {
         while (waves[i].length > 1 && remove > 0) {
           waves[i].pop();
@@ -69,6 +70,9 @@
       const a = {
         place,
         def,
+        tierDef,
+        speedMult: tierDef.speed || 1,
+        ice: !!def.ice,
         waves,
         wave: 0,
         hpMult: Math.max(0.5, 1 - C.MERCY * place.losses),
@@ -79,7 +83,7 @@
         rocks,
         fx: [],
         events: [],
-        player: { x: START.x, y: START.y, hp: maxHp, maxHp, inv: 0, dash: 0, dashCd: 0, aim: 0 },
+        player: { x: START.x, y: START.y, hp: maxHp, maxHp, inv: 0, dash: 0, dashCd: 0, aim: 0, mvx: 0, mvy: 0 },
         weapon: "revolver",
         mag: { revolver: FU.WEAPONS.revolver.mag, shotgun: Math.min(FU.WEAPONS.shotgun.mag, s.ammo.shells) },
         reloadLeft: 0,
@@ -94,6 +98,13 @@
         won: false,
       };
       return a;
+    },
+
+    // Reward if the fight ended now: full until par, then down to the floor at 3x par.
+    bounty(a) {
+      const t = a.tierDef;
+      const k = Math.max(FU.BOUNTY_FLOOR, 1 - (1 - FU.BOUNTY_FLOOR) * Math.max(0, a.time - t.par) / (2 * t.par));
+      return Math.round(t.reward * k);
     },
 
     canUse(a, s, id) {
@@ -162,8 +173,19 @@
       const speed = C.ARENA_SPEED * (p.dash > 0 ? C.DASH_SPEED : 1);
       const ox = p.x;
       const oy = p.y;
-      p.x += (input.dx / len) * speed * dt;
-      p.y += (input.dy / len) * speed * dt;
+      const wantX = (input.dx / len) * speed;
+      const wantY = (input.dy / len) * speed;
+      if (a.ice && p.dash <= 0) {
+        // On ice you speed up and slow down slowly: you slide.
+        const k = Math.min(1, 2.2 * dt);
+        p.mvx += (wantX - p.mvx) * k;
+        p.mvy += (wantY - p.mvy) * k;
+      } else {
+        p.mvx = wantX;
+        p.mvy = wantY;
+      }
+      p.x += p.mvx * dt;
+      p.y += p.mvy * dt;
       pushOut(p, 16, a.rocks);
       clampField(p, 16);
       p.vx = (p.x - ox) / dt;
@@ -355,7 +377,7 @@
           e.atkCd = def.attackEvery;
         }
       }
-    } else if (e.kind === "bandit") {
+    } else if (e.kind === "bandit" || e.kind === "boss") {
       const toward = dist > def.keep[1] ? 1 : dist < def.keep[0] ? -1 : 0;
       e.strafeT -= dt;
       if (e.strafeT <= 0) {
@@ -371,11 +393,15 @@
         if (e.stateT <= 0) {
           // Bandits lead their shots a little: keep changing direction.
           const lead = (dist / def.bulletSpeed) * def.lead;
-          const ang = Math.atan2(dy + (p.vy || 0) * lead, dx + (p.vx || 0) * lead) + (rng.next() - 0.5) * 0.16;
-          a.foeShots.push({ x: e.x + Math.cos(ang) * 26, y: e.y + Math.sin(ang) * 26, vx: Math.cos(ang) * def.bulletSpeed, vy: Math.sin(ang) * def.bulletSpeed });
+          const base = Math.atan2(dy + (p.vy || 0) * lead, dx + (p.vx || 0) * lead) + (rng.next() - 0.5) * 0.16;
+          const n = def.shots || 1;
+          for (let i = 0; i < n; i++) {
+            const ang = base + (i - (n - 1) / 2) * 0.28;
+            a.foeShots.push({ x: e.x + Math.cos(ang) * 26, y: e.y + Math.sin(ang) * 26, vx: Math.cos(ang) * def.bulletSpeed, vy: Math.sin(ang) * def.bulletSpeed });
+          }
           a.events.push("revolver");
           e.state = "move";
-          e.shootT = roll(rng, def.shootEvery);
+          e.shootT = roll(rng, def.shootEvery) / a.speedMult;
         }
       } else {
         e.shootT -= dt;
@@ -430,8 +456,8 @@
       }
     }
 
-    e.x += vx * dt;
-    e.y += vy * dt;
+    e.x += vx * a.speedMult * dt;
+    e.y += vy * a.speedMult * dt;
     // A charging bear that slams into a rock is stunned: a chance to hit back.
     if (pushOut(e, def.radius, a.rocks) && e.state === "charge") {
       e.state = "stun";

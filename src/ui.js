@@ -18,7 +18,7 @@
     {
       icons: ["direwolf", "tipi", "mountain-cave", "military-fort"],
       title: "Fight for gold",
-      text: "Each place has enemies and gold. More stars means a harder fight and more gold. A cleared place needs 10 hours to fill up again, and pays less each time.",
+      text: "Five places, each with its own enemies and a trick to learn. Each has three tiers: beat one to unlock a harder, better-paid one. Win fast: the bounty drops after a few seconds. Time is money!",
     },
     {
       icons: ["crossed-pistols"],
@@ -218,8 +218,9 @@
 
     showPlace(s, place) {
       const def = FU.PLACES[place.kind];
-      const r = FU.rewardRange(place);
-      // Exact enemies, fixed for this place.
+      const tier = FU.nextTier(place);
+      const waves = FU.tierWaves(place.kind, place.tier);
+      // Exact enemies of this tier.
       const count = (list) => {
         const n = {};
         for (const k of list) n[k] = (n[k] || 0) + 1;
@@ -227,9 +228,12 @@
           .map(([k, c]) => c + " " + (c > 1 ? FU.ENEMIES[k].plural : FU.ENEMIES[k].name).toLowerCase())
           .join(", ");
       };
-      const foes = place.waves.map((w, i) => (place.waves.length > 1 ? "Wave " + (i + 1) + ": " : "") + count(w)).join(". ");
-      let html = "<div class='foe'>" + ico(def.icon) + "<div><h3>" + def.name + " " + "★".repeat(def.stars) + "</h3>";
-      html += "<p>Win " + r[0] + "–" + r[1] + " gold. " + foes + ".</p>";
+      const foes = waves.map((w, i) => (waves.length > 1 ? "Wave " + (i + 1) + ": " : "") + count(w)).join(". ");
+      const floor = Math.round(tier.reward * FU.BOUNTY_FLOOR);
+      let html = "<div class='foe'>" + ico(def.icon) + "<div><h3>" + def.name + " · tier " + FU.TIER_NAMES[place.tier] + "</h3>";
+      html += "<p>" + foes + ".</p>";
+      html += "<p><b>Bounty: " + tier.reward + " gold</b> if you win within " + tier.par + " seconds. After that it drops, down to " + floor + ". Time is money!</p>";
+      html += "<p>Tip: " + def.tip + "</p>";
       if (place.losses) html += "<p>You lost here " + place.losses + " time" + (place.losses > 1 ? "s" : "") + ". The enemies are weaker now.</p>";
       html += "<p><b>Once you start, there's no running away. Lose, and you drop a quarter of your gold.</b></p></div></div>";
       html += "<div class='row'><button class='primary' id='pl-go'>Fight (Space)</button><button id='pl-no'>Not now (Esc)</button></div>";
@@ -248,7 +252,7 @@
         html += "</p>";
       }
       html += "<div class='options'>";
-      FU.storeItems(s).forEach((it, i) => {
+      FU.storeItems(s, town).forEach((it, i) => {
         html +=
           "<button class='option' data-id='" + it.id + "'" + (it.ok ? "" : " disabled") + "><span class='key'>" + (i + 1) + "</span><span></span>" +
           "<span><span class='name'>" + it.label + "</span>" + (it.why ? "<br><span class='detail'>" + it.why + "</span>" : "") + "</span>" +

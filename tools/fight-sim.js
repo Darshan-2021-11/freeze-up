@@ -32,25 +32,28 @@ function bot(a) {
   return { dx, dy, aimX: old.x + err(), aimY: old.y + err(), fire: true, dash: DODGE && d < 90, reload: false };
 }
 
-// [place, losses there, skill level]
+// [place, tier, losses there, skill level]
 const cases = [];
-for (const kind of Object.keys(FU.PLACES)) cases.push([kind, 0, 0]);
-cases.push(["fort", 1, 0], ["fort", 2, 0]); // rematches after losses are easier
-cases.push(["den", 0, 2], ["fort", 0, 1], ["fort", 0, 3], ["fort", 0, 5]); // trained players
-for (const [kind, losses, skill] of cases) {
+for (const kind of FU.PLACE_ORDER) for (let tier = 0; tier < 3; tier++) cases.push([kind, tier, 0, 0]);
+cases.push(["fort", 2, 1, 0], ["fort", 2, 0, 3]); // after a loss; trained
+for (const [kind, tier, losses, skill] of cases) {
   let won = 0;
   let secs = 0;
+  let pay = 0;
   for (let i = 0; i < runs; i++) {
     const s = FU.newGame("sim-" + i);
     s.ammo.dynamite = 0;
     s.skill = skill;
-    const place = { kind, losses, clears: 0 };
+    const place = { kind, tier, losses };
     const a = FU.Arena.create(s, place);
     lag = [];
     while (!a.done && a.time < 180) FU.Arena.update(a, s, 1 / 30, bot(a));
-    if (a.won) won++;
+    if (a.won) {
+      won++;
+      pay += FU.Arena.bounty(a);
+    }
     secs += a.time;
   }
-  const name = kind + (losses ? " after " + losses + " loss" + (losses > 1 ? "es" : "") : "") + (skill ? " at skill " + skill : "");
-  console.log(name.padEnd(22), "bot win rate " + ((100 * won) / runs).toFixed(0) + "%, avg fight " + (secs / runs).toFixed(1) + "s");
+  const name = kind + " " + FU.TIER_NAMES[tier] + (losses ? " after a loss" : "") + (skill ? " at skill " + skill : "");
+  console.log(name.padEnd(24), "win " + ((100 * won) / runs).toFixed(0).padStart(3) + "%, fight " + (secs / runs).toFixed(1) + "s, bounty " + (won ? (pay / won).toFixed(0) : "-") + " of " + FU.PLACES[kind].tiers[tier].reward);
 }

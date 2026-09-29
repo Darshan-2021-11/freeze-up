@@ -39,7 +39,7 @@
       ammo: { shells: 0, dynamite: 2 },
       workAcc: 0,
       buyAcc: 0,
-      stats: { fights: 0, wins: 0, losses: 0, trainings: 0, worked: 0, bought: 0 },
+      stats: { fights: 0, wins: 0, losses: 0, tiers: 0, trainings: 0, worked: 0, bought: 0 },
       status: "playing", // playing | won | lost
       endReason: "",
       score: 0,
@@ -106,26 +106,25 @@
 
   // ---- Places ----
 
-  FU.placeReady = function (s, place) {
-    return s.clock >= place.readyAt;
+  FU.placeDone = function (place) {
+    return place.tier >= FU.PLACES[place.kind].tiers.length;
   };
 
-  FU.rewardRange = function (place) {
-    const r = FU.PLACES[place.kind].reward;
-    const k = Math.pow(FU.CONFIG.REWARD_DECAY, place.clears);
-    return [Math.max(1, Math.round(r[0] * k)), Math.max(1, Math.round(r[1] * k))];
+  // The tier the player would fight next, or null once conquered.
+  FU.nextTier = function (place) {
+    return FU.placeDone(place) ? null : FU.PLACES[place.kind].tiers[place.tier];
   };
 
-  FU.winFight = function (s, place) {
-    const C = FU.CONFIG;
-    const [lo, hi] = FU.rewardRange(place);
-    const reward = s.rng.int(lo, hi);
+  // bounty: what the bounty clock showed when the fight ended. A small random bonus on top.
+  FU.winFight = function (s, place, bounty) {
+    const reward = bounty + s.rng.int(0, 2);
+    const tierName = FU.TIER_NAMES[place.tier];
     s.gold += reward;
-    place.clears += 1;
+    place.tier += 1;
     place.losses = 0;
-    place.readyAt = s.clock + C.RESPAWN_HOURS;
     s.stats.wins += 1;
-    log(s, "You cleared " + FU.PLACES[place.kind].name + " and took " + reward + " gold.", "good");
+    s.stats.tiers += 1;
+    log(s, "You beat " + FU.PLACES[place.kind].name + " tier " + tierName + " and took " + reward + " gold.", "good");
     return reward;
   };
 
@@ -133,7 +132,7 @@
     const C = FU.CONFIG;
     const lost = Math.min(s.gold, Math.max(C.LOSE_MIN, Math.ceil(s.gold * C.LOSE_SHARE)));
     s.gold -= lost;
-    place.losses += 1;
+    place.losses = Math.min(3, place.losses + 1);
     s.stats.losses += 1;
     log(s, "You lost at " + FU.PLACES[place.kind].name + " and dropped " + lost + " gold.", "bad");
     return lost;
@@ -173,9 +172,12 @@
 
   // ---- Towns ----
 
-  FU.storeItems = function (s) {
+  // Prices depend on the town: Dawson charges more.
+  FU.storeItems = function (s, town) {
     const C = FU.CONFIG;
-    return FU.STORE_ITEMS.map((it) => {
+    const mult = (town && FU.TOWNS[town.kind].priceMult) || 1;
+    return FU.STORE_ITEMS.map((base) => {
+      const it = Object.assign({}, base, { price: Math.ceil(base.price * mult) });
       let ok = s.gold >= it.price;
       let why = ok ? "" : "Not enough gold";
       if (it.weapon && s.weapons[it.weapon]) {
@@ -190,8 +192,8 @@
     });
   };
 
-  FU.buy = function (s, id) {
-    const it = FU.storeItems(s).find((x) => x.id === id);
+  FU.buy = function (s, id, town) {
+    const it = FU.storeItems(s, town).find((x) => x.id === id);
     if (!it || !it.ok || s.status !== "playing") return false;
     s.gold -= it.price;
     if (it.weapon) s.weapons[it.weapon] = true;
@@ -211,7 +213,7 @@
     }
     s.status = "won";
     s.endReason = "You caught the last boat home with " + s.gold + " gold and " + FU.fmtHours(s.hours) + " to spare.";
-    s.score = Math.round((s.gold - C.TARGET_GOLD) * 5 + s.hours * 10);
+    s.score = Math.round((s.gold - C.TARGET_GOLD) * 5 + s.hours * 10 + s.stats.tiers * 15);
     s.grade = s.score >= 300 ? "S" : s.score >= 180 ? "A" : s.score >= 80 ? "B" : "C";
     log(s, s.endReason, "good");
     return true;

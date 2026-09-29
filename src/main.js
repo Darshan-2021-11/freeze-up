@@ -107,7 +107,7 @@
     if (!near) return;
     play("click", 0.4);
     if (near.type === "place") {
-      if (!FU.placeReady(s, near.item)) return play("error", 0.4);
+      if (FU.placeDone(near.item)) return play("error", 0.4);
       place = near.item;
       mode = "place";
       FU.UI.showPlace(s, place);
@@ -163,10 +163,10 @@
     let prompt = null;
     if (near && near.type === "place") {
       const def = FU.PLACES[near.item.kind];
-      const r = FU.rewardRange(near.item);
-      prompt = FU.placeReady(s, near.item)
-        ? "Space: fight at " + def.name + " " + "★".repeat(def.stars) + " for " + r[0] + "–" + r[1] + " gold"
-        : def.name + " is empty. Back in " + FU.fmtHours(near.item.readyAt - s.clock) + ".";
+      const tier = FU.nextTier(near.item);
+      prompt = tier
+        ? "Space: fight at " + def.name + " tier " + FU.TIER_NAMES[near.item.tier] + " (bounty " + tier.reward + " gold)"
+        : def.name + " is conquered. Nothing left here.";
     } else if (near) {
       const extra = { dock: " (ticket " + C.TARGET_GOLD + " gold)", range: " (train your aim)" }[near.item.kind] || " (shop)";
       prompt = "Space: enter " + FU.TOWNS[near.item.kind].name + extra;
@@ -208,9 +208,11 @@
     arena = null;
     FU.UI.panelKey = "";
     if (a.won) {
-      const reward = FU.winFight(s, place);
+      const reward = FU.winFight(s, place, FU.Arena.bounty(a));
       play("coins", 0.7);
-      message("You won!", "You cleared " + a.def.name + " and took <b>" + reward + " gold</b>. It will fill up again in " + C.RESPAWN_HOURS + " hours.", "Continue", "gold-nuggets", null);
+      const next = FU.nextTier(place);
+      const after = next ? "Tier " + FU.TIER_NAMES[place.tier] + " is now open here: bounty " + next.reward + " gold." : a.def.name + " is conquered!";
+      message("You won in " + Math.round(a.time) + "s!", "You took <b>" + reward + " gold</b>. " + after, "Continue", "gold-nuggets", null);
     } else {
       const lost = FU.loseFight(s, place);
       play("error", 0.6);
@@ -297,7 +299,7 @@
     messageOk,
     buy: (id) => {
       if (mode !== "store") return;
-      if (FU.buy(s, id)) play("coins", 0.6);
+      if (FU.buy(s, id, town)) play("coins", 0.6);
       else play("error", 0.4);
       FU.UI.showStore(s, town);
     },

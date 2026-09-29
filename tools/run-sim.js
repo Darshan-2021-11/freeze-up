@@ -40,7 +40,7 @@ function fight(s, place) {
       FU.Arena.update(a, s, 1 / 30, fightBot(a));
     }
     if (!FU.spend(s, a.time * C.CLOCK_RATE)) return;
-    if (a.won) return FU.winFight(s, place);
+    if (a.won) return FU.winFight(s, place, FU.Arena.bounty(a));
     FU.loseFight(s, place); // then rematch right away
   }
 }
@@ -73,7 +73,7 @@ for (let i = 0; i < runs; i++) {
       continue;
     }
     // Nearest ready place, worth the trip.
-    const ready = s.world.places.filter((p) => FU.placeReady(s, p));
+    const ready = s.world.places.filter((p) => !FU.placeDone(p));
     if (!ready.length || s.hours < toDock + 4) {
       // Out of options: work the spare time, then go to the dock.
       FU.work(s, Math.max(0, s.hours - toDock - 1) / C.CONVERT_SPEED);
@@ -82,7 +82,7 @@ for (let i = 0; i < runs; i++) {
       break;
     }
     const p = ready.reduce((m, x) => {
-      const score = (x) => (FU.rewardRange(x)[0] + FU.rewardRange(x)[1]) / 2 / (1 + Math.hypot(x.x - s.player.x, x.y - s.player.y) / 600);
+      const score = (x) => FU.nextTier(x).reward / (1 + Math.hypot(x.x - s.player.x, x.y - s.player.y) / 600);
       return score(x) > score(m) ? x : m;
     });
     if (!walk(s, p.x, p.y)) break;

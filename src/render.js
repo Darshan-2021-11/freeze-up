@@ -90,13 +90,12 @@
     for (const p of wd.places) {
       if (!visible(p.x, p.y, 120)) continue;
       const def = FU.PLACES[p.kind];
-      const ready = FU.placeReady(s, p);
-      disc(ctx, p.x, p.y, 34, ready ? STAR_COLORS[def.stars] : "#9a917e", INK);
+      const tier = FU.nextTier(p);
+      disc(ctx, p.x, p.y, 34, tier ? STAR_COLORS[def.stars] : "#9a917e", INK);
       A().draw(ctx, def.icon, "#fff", p.x, p.y, 44);
       label(ctx, def.name + " " + "★".repeat(def.stars), p.x, p.y + 48, 14, INK);
-      const r = FU.rewardRange(p);
-      const sub = ready ? r[0] + "–" + r[1] + " gold" : "back in " + FU.fmtHours(p.readyAt - s.clock);
-      label(ctx, sub, p.x, p.y + 67, 12, ready ? INK : "#7a6f5c");
+      const sub = tier ? "Tier " + FU.TIER_NAMES[p.tier] + " · up to " + tier.reward + " gold" : "Conquered";
+      label(ctx, sub, p.x, p.y + 67, 12, tier ? INK : "#7a6f5c");
       if (p.losses) label(ctx, "Lost here " + p.losses + "x (weaker now)", p.x, p.y - 48, 11, "#9b2c2c");
     }
 
@@ -154,7 +153,7 @@
     ctx.fillStyle = "#8a6440";
     for (const b of wd.bridges) ctx.fillRect(x0 + b.x * k - 5, y0 + b.y * k - 2, 10, 4);
     for (const p of wd.places) {
-      ctx.fillStyle = FU.placeReady(s, p) ? STAR_COLORS[FU.PLACES[p.kind].stars] : "#9a917e";
+      ctx.fillStyle = FU.nextTier(p) ? STAR_COLORS[FU.PLACES[p.kind].stars] : "#9a917e";
       ctx.beginPath();
       ctx.arc(x0 + p.x * k, y0 + p.y * k, 4, 0, Math.PI * 2);
       ctx.fill();
@@ -201,7 +200,7 @@
     return { x: (x - v.ox) / v.k, y: (y - v.oy) / v.k };
   };
 
-  FU.Renderer.prototype.beginField = function (s) {
+  FU.Renderer.prototype.beginField = function (s, ice) {
     const ctx = this.ctx;
     const v = this.fieldView();
     ctx.fillStyle = "#1e1812";
@@ -212,8 +211,19 @@
     ctx.beginPath();
     ctx.rect(0, 0, FU.Arena.W, FU.Arena.H);
     ctx.clip();
-    ctx.fillStyle = mix([226, 219, 196], [238, 242, 246], FU.frozen(s));
+    ctx.fillStyle = ice ? "#d6e6f0" : mix([226, 219, 196], [238, 242, 246], FU.frozen(s));
     ctx.fillRect(0, 0, FU.Arena.W, FU.Arena.H);
+    if (ice) {
+      // Cracks in the lake ice.
+      ctx.strokeStyle = "rgba(255,255,255,0.8)";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 9; i++) {
+        const x = (i * 211) % FU.Arena.W;
+        const y = (i * 137) % FU.Arena.H;
+        line(ctx, x, y, x + 90, y + 40);
+        line(ctx, x + 90, y + 40, x + 130, y + 10);
+      }
+    }
     ctx.strokeStyle = "rgba(59,47,34,0.06)";
     ctx.lineWidth = 1;
     for (let x = 0; x < FU.Arena.W; x += 60) line(ctx, x, 0, x, FU.Arena.H);
@@ -237,7 +247,7 @@
 
   FU.Renderer.prototype.drawFight = function (s, a, mouse, help) {
     const ctx = this.ctx;
-    this.beginField(s);
+    this.beginField(s, a.ice);
     const p = a.player;
 
     for (const k of a.rocks) {
@@ -318,7 +328,10 @@
 
     // Field HUD
     for (let i = 0; i < p.maxHp; i++) A().draw(ctx, "hearts", i < p.hp ? "#c0392b" : "rgba(59,47,34,0.25)", 24 + i * 30, 24, 26);
-    label(ctx, a.def.name + " · wave " + Math.min(a.wave, a.waves.length) + " of " + a.waves.length + " · " + a.enemies.length + " left", FU.Arena.W / 2, 22, 15, INK);
+    label(ctx, a.def.name + " " + FU.TIER_NAMES[a.place.tier] + " · wave " + Math.min(a.wave, a.waves.length) + " of " + a.waves.length + " · " + a.enemies.length + " left", FU.Arena.W / 2, 22, 15, INK);
+    const bounty = FU.Arena.bounty(a);
+    const full = bounty >= a.tierDef.reward;
+    label(ctx, "Bounty: " + bounty + " gold" + (full ? " (" + Math.max(0, Math.ceil(a.tierDef.par - a.time)) + "s at full)" : " and dropping"), FU.Arena.W / 2, 48, 15, full ? "#2f6b3a" : "#9b2c2c", true);
     const w = FU.WEAPONS[a.weapon];
     let ammo = FU.Arena.ammoText(a, s, a.weapon);
     if (a.reloadLeft > 0) ammo = "reloading...";

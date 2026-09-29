@@ -18,10 +18,6 @@
     RIVER_HALF: 55,
     BRIDGE_HALF: 55,
 
-    // Places: each clear pays less, and the place needs time to fill up again.
-    RESPAWN_HOURS: 10,
-    REWARD_DECAY: 0.6,
-
     // Losing a fight.
     LOSE_SHARE: 0.25,
     LOSE_MIN: 3,
@@ -54,26 +50,78 @@
     ARENA_SPEED: 260,
   };
 
+  // Five unique fight places. Each has three tiers: win one to unlock the next.
+  // waves: exact enemies per wave. reward: full bounty. par: seconds before the
+  // bounty starts to drop. speed: enemy speed boost for that tier.
   FU.PLACES = {
-    den: { name: "Wolf Den", icon: "direwolf", stars: 1, reward: [8, 14], waves: [{ wolf: [3, 5] }] },
-    camp: { name: "Bandit Camp", icon: "tipi", stars: 2, reward: [16, 24], waves: [{ bandit: [3, 4], wolf: [0, 2] }] },
-    cave: { name: "Bear Cave", icon: "mountain-cave", stars: 2, reward: [18, 26], waves: [{ bear: [1, 1], wolf: [2, 3] }] },
+    den: {
+      name: "Wolf Den",
+      icon: "direwolf",
+      stars: 1,
+      tip: "Wolves crouch before they lunge. Dash sideways.",
+      tiers: [
+        { waves: [{ wolf: 3 }], reward: 12, par: 7 },
+        { waves: [{ wolf: 6 }], reward: 18, par: 9 },
+        { waves: [{ wolf: 5 }, { wolf: 6 }], reward: 26, par: 15, speed: 1.25 },
+      ],
+    },
+    camp: {
+      name: "Bandit Camp",
+      icon: "tipi",
+      stars: 2,
+      tip: "Bandits shout \"!\" before they shoot. Hide behind rocks.",
+      tiers: [
+        { waves: [{ bandit: 2, wolf: 1 }], reward: 16, par: 10 },
+        { waves: [{ bandit: 3, wolf: 2 }], reward: 24, par: 12 },
+        { waves: [{ bandit: 3 }, { bandit: 2, wolf: 2 }], reward: 34, par: 20, speed: 1.1 },
+      ],
+    },
+    cave: {
+      name: "Bear Cave",
+      icon: "mountain-cave",
+      stars: 2,
+      tip: "Bears glow red before they charge. Make them crash into a rock.",
+      tiers: [
+        { waves: [{ bear: 1 }], reward: 18, par: 10 },
+        { waves: [{ bear: 1, wolf: 3 }], reward: 26, par: 13 },
+        { waves: [{ bear: 2, wolf: 1 }], reward: 38, par: 16, speed: 1.15 },
+      ],
+    },
+    lake: {
+      name: "Frozen Lake",
+      icon: "snowflake-2",
+      stars: 2,
+      ice: true,
+      tip: "The ice is slippery: you keep sliding. Start moving early.",
+      tiers: [
+        { waves: [{ wolf: 4 }], reward: 16, par: 8 },
+        { waves: [{ wolf: 4, bandit: 2 }], reward: 24, par: 12 },
+        { waves: [{ wolf: 5 }, { wolf: 3, bandit: 3 }], reward: 34, par: 18, speed: 1.15 },
+      ],
+    },
     fort: {
       name: "Jumpers' Fort",
       icon: "military-fort",
       stars: 3,
-      reward: [30, 42],
-      waves: [{ bandit: [2, 3], wolf: [1, 2] }, { bandit: [1, 2], bear: [1, 1] }],
+      tip: "Everything at once. The boss fires three bullets at a time.",
+      tiers: [
+        { waves: [{ bandit: 2, wolf: 2 }, { bandit: 1, bear: 1 }], reward: 32, par: 22 },
+        { waves: [{ bandit: 2, wolf: 2 }, { bandit: 2, bear: 1 }], reward: 44, par: 24 },
+        { waves: [{ bandit: 2, wolf: 1 }, { boss: 1, bandit: 1 }], reward: 60, par: 26 },
+      ],
     },
   };
-  // Which places each world gets, easiest first.
-  FU.PLACE_DECK = ["den", "den", "den", "camp", "camp", "cave", "cave", "fort", "fort"];
+  FU.PLACE_ORDER = ["den", "camp", "cave", "lake", "fort"];
+  FU.TIER_NAMES = ["I", "II", "III"];
+
+  // Bounty clock: full reward until par, then it drops to BOUNTY_FLOOR at 3x par.
+  FU.BOUNTY_FLOOR = 0.5;
 
   FU.TOWNS = {
     cabin: { name: "Your Cabin", icon: "wood-cabin" },
     post: { name: "Trading Post", icon: "shop" },
     range: { name: "Shooting Range", icon: "bullseye" },
-    dock: { name: "Dawson Dock", icon: "paddle-steamer" },
+    dock: { name: "Dawson Dock", icon: "paddle-steamer", priceMult: 1.5 },
   };
 
   FU.WEAPONS = {
@@ -121,6 +169,22 @@
       bulletSpeed: 430,
       lead: 0.7, // how well they aim ahead of a moving player
       keep: [230, 340],
+    },
+    boss: {
+      name: "Claim Jumper Boss",
+      plural: "Bosses",
+      icon: "bandit",
+      color: "#2b1010",
+      hp: 18,
+      speed: 95,
+      radius: 32,
+      touch: 1,
+      shootEvery: [1.2, 1.8],
+      windup: 0.45,
+      bulletSpeed: 400,
+      lead: 0.5,
+      keep: [220, 320],
+      shots: 3, // bullets per volley, fanned out
     },
     bear: {
       name: "Bear",

@@ -20,42 +20,38 @@
       { kind: "post", x: Math.round(riverX(bridges[1].y) - 330), y: bridges[1].y + rng.pick([-160, 160]) },
       { kind: "dock", x: W - 170, y: rng.int(500, H - 500) },
     ];
-    // Two shooting ranges, one on each side of the river.
-    for (const side of [0, 1]) {
-      for (let tries = 0; tries < 200; tries++) {
-        const x = side ? rng.int(Math.round(W * 0.62), W - 450) : rng.int(420, Math.round(W * 0.36));
-        const y = rng.int(200, H - 200);
-        if (Math.abs(x - riverX(y)) < C.RIVER_HALF + 200) continue;
-        if (towns.some((t) => Math.hypot(t.x - x, t.y - y) < 380)) continue;
-        towns.push({ kind: "range", x, y });
-        break;
-      }
+    // One shooting range, west of the river.
+    for (let tries = 0; tries < 300; tries++) {
+      const x = rng.int(420, Math.round(W * 0.38));
+      const y = rng.int(200, H - 200);
+      if (Math.abs(x - riverX(y)) < C.RIVER_HALF + 200) continue;
+      if (towns.some((t) => Math.hypot(t.x - x, t.y - y) < 380)) continue;
+      towns.push({ kind: "range", x, y });
+      break;
     }
 
     const blocked = (x, y, gap) => Math.abs(x - riverX(y)) < C.RIVER_HALF + gap;
     const far = (list, x, y, d) => list.every((p) => Math.hypot(p.x - x, p.y - y) >= d);
 
-    // Places: spread out, away from the river and towns.
+    // Five unique places, spread out, away from the river and towns.
     const spots = [];
-    for (let tries = 0; spots.length < FU.PLACE_DECK.length && tries < 4000; tries++) {
+    for (let tries = 0; spots.length < FU.PLACE_ORDER.length && tries < 4000; tries++) {
       const x = rng.int(260, W - 260);
       const y = rng.int(160, H - 160);
       if (blocked(x, y, 150)) continue;
-      if (!far(towns, x, y, 330) || !far(spots, x, y, 360)) continue;
+      if (!far(towns, x, y, 330) || !far(spots, x, y, 480)) continue;
       spots.push({ x, y });
     }
     // Easier places nearer the cabin, with a little shuffle.
-    spots.forEach((p) => (p.key = p.x + rng.int(-500, 500)));
+    spots.forEach((p) => (p.key = p.x + rng.int(-300, 300)));
     spots.sort((a, b) => a.key - b.key);
     const places = spots.map((p, i) => ({
       id: i,
-      kind: FU.PLACE_DECK[i],
-      waves: FU.rollWaves(rng, FU.PLACE_DECK[i]),
+      kind: FU.PLACE_ORDER[i],
       x: p.x,
       y: p.y,
-      clears: 0,
-      losses: 0,
-      readyAt: 0, // game clock hour when it can be fought again
+      tier: 0, // next tier to fight; 3 means conquered
+      losses: 0, // losses at the current tier
     }));
 
     const trees = [];
@@ -71,14 +67,11 @@
     return { W, H, river, bridges, towns, places, trees, riverX };
   };
 
-  // The exact enemies at a place, fixed when the world is made.
-  FU.rollWaves = function (rng, kind) {
-    return FU.PLACES[kind].waves.map(function (w) {
+  // The exact enemies of one tier, as a list of kinds per wave.
+  FU.tierWaves = function (kind, tier) {
+    return FU.PLACES[kind].tiers[tier].waves.map(function (w) {
       const list = [];
-      for (const [k, range] of Object.entries(w)) {
-        const n = rng.int(range[0], range[1]);
-        for (let i = 0; i < n; i++) list.push(k);
-      }
+      for (const [k, n] of Object.entries(w)) for (let i = 0; i < n; i++) list.push(k);
       return list;
     });
   };
