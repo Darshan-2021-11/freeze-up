@@ -3,9 +3,9 @@
   const FU = (g.FU = g.FU || {});
 
   FU.CONFIG = {
-    START_HOURS: 44,
+    START_HOURS: 50,
     START_GOLD: 10,
-    TARGET_GOLD: 170,
+    TARGET_GOLD: 260,
 
     // The clock always runs: in the world, in shops, in fights and in training.
     CLOCK_RATE: 0.1, // game hours per real second (10 real seconds = 1 hour)

@@ -340,7 +340,7 @@
     label(ctx, dashReady ? "Dash ready (Space)" : "Dash " + p.dashCd.toFixed(1) + "s", FU.Arena.W - 110, 46, 13, dashReady ? "#2f6b3a" : "#7a6f5c");
     if (help) {
       label(ctx, "WASD move · Mouse aim · Click/hold to shoot · Space dash · R reload · 1–3 weapons", FU.Arena.W / 2, FU.Arena.H - 20, 14, INK);
-      label(ctx, "No running away. Bandits yell \"!\" before they shoot. Bears glow red before a charge: dodge, and let them hit a rock.", FU.Arena.W / 2, FU.Arena.H - 44, 13, INK);
+      label(ctx, "No running away. " + a.def.tip + " Enemies show \"!\" before they attack.", FU.Arena.W / 2, FU.Arena.H - 44, 13, INK);
     }
     this.drawCrosshair(mouse, a.weapon === "dynamite" ? 20 : 12);
     ctx.restore();
